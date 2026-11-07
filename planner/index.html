@@ -59,6 +59,7 @@ input[type=text], input[type=number], input[type=search], select {
   background: var(--raised); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 8px; min-width: 0; width: 100%;
 }
 input[type=number] { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+input, select { box-sizing: border-box; }
 input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--select); outline-offset: 1px; }
 .btn { border: 1px solid var(--line); background: var(--raised); border-radius: var(--r); padding: 5px 10px; cursor: pointer; white-space: nowrap; }
 .btn:hover { border-color: var(--muted); }
@@ -104,7 +105,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
   border-radius: 8px; box-shadow: 0 6px 24px rgb(0 0 0 / .14); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
 .inspector .head { display: flex; gap: 8px; align-items: center; }
 .inspector .head input { font-weight: 600; }
-.dims3 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.dims3 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
 .pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
 .pill.ok { color: var(--ok); }
 .pill.bad { color: var(--danger); }
@@ -248,6 +249,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
         <div class="field"><label for="iW">Width</label><input type="number" id="iW" min="5" max="600"></div>
         <div class="field"><label for="iD">Depth</label><input type="number" id="iD" min="5" max="600"></div>
         <div class="field"><label for="iH">Height</label><input type="number" id="iH" min="1" max="300"></div>
+        <div class="field"><label for="iE">Off floor</label><input type="number" id="iE" min="0" max="250"></div>
         <div class="field"><label for="iR">Turn °</label><input type="number" id="iR" step="15"></div>
       </div>
       <div class="row">
@@ -339,7 +341,7 @@ const CATALOG = [
     {"type": "cornersofa", "name": "FRIHETEN corner sofa-bed, chaise left", "w": 230, "d": 151, "h": 86, "color": "#4a4f55", "opt": {"variant": "L", "seat": 0.9, "chaise": 0.78, "arm": 0.12}},
     {"type": "lounge", "name": "POÄNG armchair", "w": 68, "d": 82, "h": 100, "color": "#cdbfa6"},
     {"type": "sofa", "name": "STRANDMON wing chair", "w": 82, "d": 96, "h": 101, "color": "#c9b28f", "opt": {"arm": 0.17}},
-    {"type": "sofa", "name": "EKENÄSET armchair", "w": 64, "d": 78, "h": 76, "color": "#8c8f7a", "opt": {"arm": 0.06}},
+    {"type": "framechair", "name": "EKENÄSET armchair", "w": 64, "d": 78, "h": 76, "color": "#d9cfbf"},
   ], "IKEA"],
   ["Tables & dining chairs", [
     {"type": "table", "name": "LACK coffee table", "w": 90, "d": 55, "h": 45, "color": "#3a2f2a", "opt": {"inset": 0.025, "leg": 0.025, "top": 0.05}},
@@ -420,13 +422,14 @@ const CATALOG = [
     {"type": "lamp", "name": "HEKTAR floor lamp", "w": 34, "d": 34, "h": 181, "color": "#3b3d40"},
     {"type": "lamp", "name": "ÅRSTID floor lamp", "w": 36, "d": 36, "h": 155, "color": "#c8a45c"},
     {"type": "lamp", "name": "NYMÅNE floor lamp", "w": 25, "d": 25, "h": 170, "color": "#f0efea"},
+    {"type": "ringlamp", "name": "VARMBLIXT table/wall lamp, round", "w": 30, "d": 11, "h": 30, "color": "#e8742c", "opt": {"sits": true}},
     {"type": "plant", "name": "FEJKA weeping fig, large", "w": 80, "d": 80, "h": 210, "color": "#4f7a4a"},
     {"type": "plant", "name": "FEJKA kentia palm", "w": 70, "d": 70, "h": 180, "color": "#4f7a4a"},
   ], "IKEA"],
 ];
 const DEFAULT_COLOR = { sofa: "#5d7183", bed: "#8fa3b8", table: "#b5865a", chair: "#b5865a", desk: "#e8e8e6", deskchair: "#2b2f33",
   tv: "#e8e8e6", shelf: "#b5865a", rug: "#a68b6d", cabinet: "#b5865a", drawers: "#b5865a", wardrobe: "#e8e8e6", plant: "#4f7a4a", box: "#c9b48f",
-  cubes: "#f0efea", openshelf: "#d8b98a", cornersofa: "#4a4f55", lounge: "#cdbfa6", roundtable: "#f0efea", trolley: "#7e9c8f", lamp: "#3b3d40", mirror: "#2c2c2e" };
+  cubes: "#f0efea", openshelf: "#d8b98a", cornersofa: "#4a4f55", lounge: "#cdbfa6", roundtable: "#f0efea", trolley: "#7e9c8f", lamp: "#3b3d40", mirror: "#2c2c2e", ringlamp: "#e8742c", framechair: "#d9cfbf" };
 const SWATCHES = ["#5d7183", "#7a8f6a", "#b5865a", "#e8e8e6", "#2b2f33", "#b0574a"];
 
 // Example arrangement (flat coordinates in metres: x east, z = minus plan-north; rot in degrees, 0 = front faces down the plan)
@@ -567,6 +570,7 @@ renderer.domElement.addEventListener("pointermove", (e) => {
     it.x = clamp(x, B[0] - 1.5, B[1] + 1.5);
     it.z = clamp(z, -B[3] - 1.5, -B[2] + 1.5);
     drag.moved = true;
+    settle(it);
     placeItem(it);
     updateSelectionUI();
     return;
@@ -873,6 +877,30 @@ const BUILD = {
     cyl(g, 0.012, 0.012, 0.03, h - 0.2, M.dark, 8);
     cyl(g, r, r * 0.8, h - 0.3, h, M.shade, 24);
   },
+  framechair(g, w, d, h, M) {
+    const seat = 0.45, arm = Math.min(h - 0.05, 0.63), fz = d / 2 - 0.04, bz = -d / 2 + 0.05;
+    for (const sx of [-1, 1]) {
+      const x = sx * (w / 2 - 0.025);
+      box(g, x - 0.022, x + 0.022, 0, arm, fz - 0.022, fz + 0.022, M.wood);
+      beam(g, [x, 0, bz], [x, h - 0.02, bz - 0.04], 0.044, 0.044, M.wood);
+      box(g, x - 0.025, x + 0.025, arm - 0.035, arm, bz - 0.02, fz + 0.03, M.wood);
+      box(g, x - 0.02, x + 0.02, 0.22, 0.28, bz, fz, M.wood);
+    }
+    box(g, -w / 2 + 0.05, w / 2 - 0.05, 0.22, 0.27, fz - 0.03, fz + 0.01, M.wood);
+    box(g, -w / 2 + 0.05, w / 2 - 0.05, 0.28, seat, bz + 0.08, fz + 0.01, M.main);
+    beam(g, [0, seat - 0.02, bz + 0.1], [0, h - 0.04, bz - 0.02], 0.11, w - 0.1, M.main);
+  },
+  ringlamp(g, w, d, h, M) {
+    const tube = d / 2, R = Math.max(0.02, Math.min(w, h) / 2 - tube);
+    Object.assign(M.main, { transparent: true, opacity: 0.9, roughness: 0.2 });
+    M.main.userData.glow = M.main.color.clone().multiplyScalar(0.7);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(R, tube, 16, 40), M.main);
+    ring.position.y = R + tube;
+    g.add(ring);
+    const light = new THREE.PointLight(M.main.color.clone().lerp(new THREE.Color("#ffd2a0"), 0.5), 0.8, 3.5, 2);
+    light.position.set(0, R + tube, 0.08);
+    g.add(light);
+  },
   mirror(g, w, d, h, M) {
     box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main);
     box(g, -w / 2 + 0.03, w / 2 - 0.03, 0.03, h - 0.03, d / 2, d / 2 + 0.003, M.mirror);
@@ -969,9 +997,24 @@ function disposeGroup(g) {
 function placeItem(it, skipCollide) {
   const g = meshes.get(it.id);
   if (!g) return;
-  g.position.set(it.x, 0, it.z);
+  g.position.set(it.x, (it.elev || 0) / 100, it.z);
   g.rotation.y = it.rot * DEG;
   if (!skipCollide) refreshHighlights();
+}
+// lamps and other small pieces sit on top of whatever they're dropped on
+function settle(it) {
+  if (!it.opt?.sits) return false;
+  const r = rectOf(it);
+  let top = 0;
+  for (const o of state.items) {
+    if (o === it || o.type === "rug" || o.opt?.sits) continue;
+    const t = ((o.elev || 0) + o.h) / 100;
+    if (t < 2 && t > top && overlap(r, rectOf(o))) top = t;
+  }
+  const elev = Math.round(top * 100);
+  if (elev === (it.elev || 0)) return false;
+  it.elev = elev;
+  return true;
 }
 function rebuildAll() {
   for (const g of meshes.values()) { furnRoot.remove(g); disposeGroup(g); }
@@ -1014,19 +1057,21 @@ const tucks = (a, b) => SEATS.has(a.type) && TABLES.has(b.type); // chairs may s
 
 function collides(it) {
   if (it.type === "rug") return null;
-  const r = rectOf(it), h = it.h / 100;
+  const r = rectOf(it), e = (it.elev || 0) / 100, h = e + it.h / 100; // h = top of the item
   const ceil = META?.ceiling || 2.26;
-  if (h > ceil + 0.004) return "Taller than the 2.26 m ceiling";
+  if (h > ceil + 0.004) return e ? "Reaches above the 2.26 m ceiling" : "Taller than the 2.26 m ceiling";
   // sloped ceiling strips along the front (north) wall and the bedroom's back wall
   const cs = corners(r), north = -B[3], south = -B[2];
   const dN = Math.min(...cs.map((c) => c[1] - north)), dS = Math.min(...cs.filter((c) => c[0] > 2.1).map((c) => south - c[1]));
   const slopeAt = (t) => 1.98 + ((ceil - 1.98) * Math.max(0, t)) / 0.45;
   if ((dN < 0.45 && h > slopeAt(dN) + 0.004) || (dS < 0.45 && h > slopeAt(dS) + 0.004)) return "Too tall for the sloped ceiling here";
   for (const o of OBST) {
-    if (o.y0 < h - 0.01 && o.y1 > 0.01 && overlap(r, aabbRect(o))) return "Hits a wall or fixture";
+    if (o.y0 < h - 0.01 && o.y1 > e + 0.01 && overlap(r, aabbRect(o))) return "Hits a wall or fixture";
   }
   for (const other of state.items) {
     if (other === it || other.type === "rug" || tucks(it, other) || tucks(other, it)) continue;
+    const oe = (other.elev || 0) / 100;
+    if (oe + other.h / 100 <= e + 0.005 || oe >= h - 0.005) continue; // one sits on top of the other
     if (overlap(r, rectOf(other))) return "Overlaps " + (other.name || "another item");
   }
   return null;
@@ -1039,7 +1084,10 @@ function refreshHighlights() {
     it._bad = bad;
     const sel = state.selected === it.id;
     const col = bad ? badColor : selColor;
-    for (const m of g.userData.mats) m.emissive?.copy(col).multiplyScalar(bad ? 0.35 : sel ? 0.22 : 0);
+    for (const m of g.userData.mats) {
+      m.emissive?.copy(col).multiplyScalar(bad ? 0.35 : sel ? 0.22 : 0);
+      if (m.userData.glow) m.emissive.add(m.userData.glow);
+    }
     g.userData.outline.visible = sel || bad;
     g.userData.outline.material.color.copy(col);
   }
@@ -1123,6 +1171,7 @@ function updateSelectionUI() {
   set($("iD"), Math.round(it.d));
   set($("iH"), Math.round(it.h));
   set($("iR"), Math.round(((it.rot % 360) + 360) % 360));
+  set($("iE"), Math.round(it.elev || 0));
   $("flipItem").hidden = it.type !== "cornersofa";
   const col = it.color || DEFAULT_COLOR[it.type];
   for (const b of $("swatches").children) b.setAttribute("aria-pressed", b.dataset.c === col);
@@ -1153,6 +1202,7 @@ editNum("iW", "w", 5, 600);
 editNum("iD", "d", 5, 600);
 editNum("iH", "h", 1, 300);
 editNum("iR", "rot", -720, 720);
+editNum("iE", "elev", 0, 250);
 $("iName").addEventListener("input", (e) => { const it = itemById(state.selected); if (it) { it.name = e.target.value; changed(); } });
 function rotate(by) {
   const it = itemById(state.selected);
@@ -1247,9 +1297,11 @@ function addItem(tpl) {
   if (mode !== "walk") {
     for (const [x, z] of [[it.x, it.z], [1.6, -7.0], [4.1, -1.6], [1.5, -8.6], [1.3, -3.4], [4.3, -8.6]]) {
       Object.assign(it, { x, z });
+      settle(it);
       if (!collides(it)) break;
     }
   }
+  settle(it);
   state.items.push(it);
   buildItem(it);
   if (mode !== "walk") select(it.id); else refreshHighlights();
@@ -1531,7 +1583,7 @@ function blocked(x, z) {
     if ((x - nx) ** 2 + (z - nz) ** 2 < RADIUS * RADIUS) return true;
   }
   for (const it of state.items) {
-    if (it.type === "rug" || it.h < 15) continue;
+    if (it.type === "rug" || it.h < 15 || (it.elev || 0) > 100) continue;
     const c = Math.cos(it.rot * DEG), s = Math.sin(it.rot * DEG);
     const dx = x - it.x, dz = z - it.z;
     const lx = dx * c - dz * s, lz = dx * s + dz * c;
