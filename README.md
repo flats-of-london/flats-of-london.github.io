@@ -1,8 +1,8 @@
-# Fourth Floor Planner
+# Flats of London
 
-A 3D model of a one-bedroom fourth-floor flat in London (53 m², ceiling 2.26 m), built from the listing's floor plan and viewing photos, with a furniture planner.
+3D models of London flats with a furniture planner. The first is a one-bedroom fourth-floor flat (53 m², ceiling 2.26 m), built from the listing's floor plan and viewing photos, with a furniture planner.
 
-**Live site:** https://gaspardol.github.io/flats_of_london/
+**Live site:** https://flats-of-london.github.io/ (planner for this flat: `/fourth-floor/`, or `/fourth-floor/#walk` to start walking)
 
 - **3D / Plan** views, eye-level presets, cut-away walls and ceiling toggle
 - **Walk** mode: first-person walk-through (WASD + mouse, or touch joystick) with a minimap
@@ -11,4 +11,4 @@ A 3D model of a one-bedroom fourth-floor flat in London (53 m², ceiling 2.26 m)
 
 Dimensions come from the floor plan (scale checked against the four room sizes); window heights, ceiling slopes and the stair layout are estimates. Measure on site before buying anything that has to fit tightly.
 
-Files: `index.html` (three.js app, no build step), `flat_glb.txt` (the model, a base64-encoded GLB), `flat_meta.json` (walls/fixtures for collision checks, room labels).
+Files: `index.html` (list of flats); per flat, e.g. `fourth-floor/`: `index.html` (three.js app, no build step), `preview.jpg`, `flat_glb.txt` (the model, a base64-encoded GLB), `flat_meta.json` (walls/fixtures for collision checks, room labels).
