@@ -55,7 +55,7 @@ button, input, select { font: inherit; color: inherit; }
 .row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .field { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
 .field label { font-size: 12px; color: var(--muted); letter-spacing: .03em; }
-input[type=text], input[type=number], select {
+input[type=text], input[type=number], input[type=search], select {
   background: var(--raised); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 8px; min-width: 0; width: 100%;
 }
 input[type=number] { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
@@ -68,7 +68,8 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 .btn[disabled] { opacity: .45; cursor: default; }
 
 .cat-group { display: flex; flex-direction: column; gap: 2px; }
-.cat-group h3 { margin: 6px 0 2px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.cat-group h3 { margin: 6px 0 2px; font-size: 13px; font-weight: 600; color: var(--ink); display: flex; gap: 6px; align-items: baseline; }
+.cat-group h3 .brand { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--accent); }
 .cat-item { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; text-align: left; width: 100%;
   border: 1px solid transparent; background: none; border-radius: var(--r); padding: 5px 8px; cursor: pointer; }
 .cat-item:hover { background: var(--raised); border-color: var(--line); }
@@ -180,8 +181,11 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
 
     <section class="sec" aria-labelledby="h-cat">
       <h2 id="h-cat">Add furniture</h2>
-      <p class="note">Sizes are typical UK sizes in cm (width × depth). You can change them after adding.</p>
+      <p class="note">Sizes in cm (width × depth). You can change them after adding.</p>
+      <input type="search" id="catSearch" placeholder="Search, e.g. KALLAX, bed, sofa" aria-label="Search furniture">
       <div id="catalog"></div>
+      <p class="note">IKEA pieces use the sizes listed on ikea.com/gb (checked Nov 2026), drawn as simple shapes. Beds are UK double frames (135×190 mattress). Not affiliated with IKEA.</p>
+      <p class="note" id="catNone" hidden>Nothing matches. Try another name, or add your own piece below.</p>
     </section>
 
     <section class="sec" aria-labelledby="h-custom">
@@ -190,7 +194,7 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
         <div class="field wide"><label for="cName">Name</label><input type="text" id="cName" value="My sofa" maxlength="40"></div>
         <div class="field"><label for="cW">Width cm</label><input type="number" id="cW" value="180" min="5" max="600"></div>
         <div class="field"><label for="cD">Depth cm</label><input type="number" id="cD" value="85" min="5" max="600"></div>
-        <div class="field"><label for="cH">Height cm</label><input type="number" id="cH" value="80" min="1" max="226"></div>
+        <div class="field"><label for="cH">Height cm</label><input type="number" id="cH" value="80" min="1" max="300"></div>
         <button class="btn primary wide" type="submit">Add box</button>
       </form>
     </section>
@@ -243,13 +247,14 @@ input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px s
       <div class="dims3">
         <div class="field"><label for="iW">Width</label><input type="number" id="iW" min="5" max="600"></div>
         <div class="field"><label for="iD">Depth</label><input type="number" id="iD" min="5" max="600"></div>
-        <div class="field"><label for="iH">Height</label><input type="number" id="iH" min="1" max="226"></div>
+        <div class="field"><label for="iH">Height</label><input type="number" id="iH" min="1" max="300"></div>
         <div class="field"><label for="iR">Turn °</label><input type="number" id="iR" step="15"></div>
       </div>
       <div class="row">
         <button class="btn" id="rotL" title="Rotate 15° left">⟲ 15°</button>
         <button class="btn" id="rot90" title="Rotate 90° (R)">Turn 90°</button>
         <button class="btn" id="rotR" title="Rotate 15° right">15° ⟳</button>
+        <button class="btn" id="flipItem" title="Put the chaise on the other side" hidden>Mirror</button>
         <div class="swatches" id="swatches" role="group" aria-label="Colour"></div>
       </div>
       <div class="row">
@@ -308,9 +313,107 @@ const CATALOG = [
     { type: "plant", name: "Plant", w: 40, d: 40, h: 120 },
     { type: "box", name: "Storage boxes", w: 60, d: 40, h: 40 },
   ]],
+  ["Sofas & armchairs", [
+    {"type": "sofa", "name": "KIVIK 3-seat sofa", "w": 228, "d": 95, "h": 83, "color": "#6b7075", "opt": {"arm": 0.18}},
+    {"type": "sofa", "name": "KIVIK 2-seat sofa", "w": 190, "d": 95, "h": 83, "color": "#6b7075", "opt": {"arm": 0.18}},
+    {"type": "sofa", "name": "EKTORP 3-seat sofa", "w": 218, "d": 88, "h": 88, "color": "#cfc6b4", "opt": {"arm": 0.24}},
+    {"type": "sofa", "name": "EKTORP 2-seat sofa", "w": 179, "d": 88, "h": 88, "color": "#cfc6b4", "opt": {"arm": 0.24}},
+    {"type": "sofa", "name": "SÖDERHAMN 3-seat sofa", "w": 198, "d": 99, "h": 83, "color": "#c9bda6", "opt": {"arm": 0.1}},
+    {"type": "sofa", "name": "KLIPPAN 2-seat sofa", "w": 180, "d": 88, "h": 66, "color": "#2f3033", "opt": {"arm": 0.2}},
+    {"type": "sofa", "name": "VIMLE 3-seat sofa", "w": 241, "d": 98, "h": 83, "color": "#8a7a66", "opt": {"arm": 0.15}},
+    {"type": "sofa", "name": "LANDSKRONA 3-seat sofa", "w": 204, "d": 89, "h": 78, "color": "#7f9a86", "opt": {"arm": 0.1}},
+    {"type": "cornersofa", "name": "FRIHETEN corner sofa-bed, chaise right", "w": 230, "d": 151, "h": 86, "color": "#4a4f55", "opt": {"variant": "R", "seat": 0.9, "chaise": 0.78, "arm": 0.12}},
+    {"type": "cornersofa", "name": "FRIHETEN corner sofa-bed, chaise left", "w": 230, "d": 151, "h": 86, "color": "#4a4f55", "opt": {"variant": "L", "seat": 0.9, "chaise": 0.78, "arm": 0.12}},
+    {"type": "lounge", "name": "POÄNG armchair", "w": 68, "d": 82, "h": 100, "color": "#cdbfa6"},
+    {"type": "sofa", "name": "STRANDMON wing chair", "w": 82, "d": 96, "h": 101, "color": "#c9b28f", "opt": {"arm": 0.17}},
+    {"type": "sofa", "name": "EKENÄSET armchair", "w": 64, "d": 78, "h": 76, "color": "#8c8f7a", "opt": {"arm": 0.06}},
+  ], "IKEA"],
+  ["Tables & dining chairs", [
+    {"type": "table", "name": "LACK coffee table", "w": 90, "d": 55, "h": 45, "color": "#3a2f2a", "opt": {"inset": 0.025, "leg": 0.025, "top": 0.05}},
+    {"type": "table", "name": "LACK coffee table, large", "w": 118, "d": 78, "h": 45, "color": "#3a2f2a", "opt": {"inset": 0.025, "leg": 0.025, "top": 0.05}},
+    {"type": "table", "name": "LACK side table", "w": 55, "d": 55, "h": 45, "color": "#f0efea", "opt": {"inset": 0.025, "leg": 0.025, "top": 0.05}},
+    {"type": "table", "name": "LISTERBY coffee table", "w": 140, "d": 60, "h": 37, "color": "#6b4a33"},
+    {"type": "table", "name": "VIHALS table", "w": 74, "d": 74, "h": 75, "color": "#f0efea"},
+    {"type": "table", "name": "VIHALS table, long", "w": 125, "d": 74, "h": 75, "color": "#f0efea"},
+    {"type": "table", "name": "LISABO table", "w": 140, "d": 78, "h": 74, "color": "#d2b48c"},
+    {"type": "table", "name": "TONSTAD extendable table (opens to 196)", "w": 140, "d": 85, "h": 75, "color": "#c9a27a"},
+    {"type": "table", "name": "ROSENTORP extendable table (opens to 215)", "w": 155, "d": 87, "h": 75, "color": "#f0efea"},
+    {"type": "table", "name": "NORDEN gateleg table, both leaves up", "w": 152, "d": 80, "h": 74, "color": "#d9c3a0"},
+    {"type": "table", "name": "NORDEN gateleg table, one leaf up", "w": 89, "d": 80, "h": 74, "color": "#d9c3a0"},
+    {"type": "table", "name": "NORDEN gateleg table, folded", "w": 26, "d": 80, "h": 74, "color": "#d9c3a0", "opt": {"inset": 0.03}},
+    {"type": "roundtable", "name": "DOCKSTA round table", "w": 103, "d": 103, "h": 75, "color": "#f0efea"},
+    {"type": "chair", "name": "STEFAN chair", "w": 42, "d": 49, "h": 90, "color": "#5a4636"},
+    {"type": "chair", "name": "SANDSBERG chair", "w": 39, "d": 47, "h": 77, "color": "#2c2c2e"},
+    {"type": "chair", "name": "TEODORES chair", "w": 46, "d": 54, "h": 80, "color": "#f0efea"},
+    {"type": "chair", "name": "LISABO chair", "w": 46, "d": 51, "h": 80, "color": "#d2b48c"},
+    {"type": "chair", "name": "ROSENTORP chair", "w": 44, "d": 53, "h": 91, "color": "#f0efea"},
+  ], "IKEA"],
+  ["Desks & office", [
+    {"type": "desk", "name": "MICKE desk", "w": 105, "d": 50, "h": 75, "color": "#f0efea"},
+    {"type": "desk", "name": "ALEX desk", "w": 132, "d": 58, "h": 76, "color": "#f0efea", "opt": {"pedestal": true}},
+    {"type": "desk", "name": "LINNMON / ADILS table", "w": 100, "d": 60, "h": 74, "color": "#f0efea"},
+    {"type": "desk", "name": "LAGKAPTEN / ADILS desk", "w": 120, "d": 60, "h": 73, "color": "#f0efea"},
+    {"type": "desk", "name": "LAGKAPTEN / ALEX desk", "w": 140, "d": 60, "h": 73, "color": "#f0efea", "opt": {"pedestal": true}},
+    {"type": "desk", "name": "MITTZON sit/stand desk", "w": 160, "d": 80, "h": 75, "color": "#f0efea"},
+    {"type": "deskchair", "name": "MARKUS office chair", "w": 62, "d": 60, "h": 129, "color": "#2c2c2e"},
+    {"type": "deskchair", "name": "FLINTAN office chair", "w": 71, "d": 71, "h": 114, "color": "#2c2c2e"},
+    {"type": "drawers", "name": "ALEX drawer unit", "w": 36, "d": 58, "h": 70, "color": "#f0efea", "opt": {"rows": 5}},
+  ], "IKEA"],
+  ["Storage", [
+    {"type": "cubes", "name": "KALLAX shelving 2×2", "w": 76.5, "d": 39, "h": 76.5, "color": "#f0efea"},
+    {"type": "cubes", "name": "KALLAX shelving 2×4", "w": 76.5, "d": 39, "h": 146.5, "color": "#f0efea"},
+    {"type": "cubes", "name": "KALLAX shelving 4×2 (on its side)", "w": 146.5, "d": 39, "h": 76.5, "color": "#f0efea"},
+    {"type": "cubes", "name": "KALLAX shelving 4×4", "w": 147, "d": 39, "h": 146.5, "color": "#f0efea"},
+    {"type": "cubes", "name": "KALLAX shelving 1×4", "w": 41.5, "d": 39, "h": 146.5, "color": "#f0efea"},
+    {"type": "shelf", "name": "BILLY bookcase", "w": 80, "d": 28, "h": 202, "color": "#f0efea"},
+    {"type": "shelf", "name": "BILLY bookcase, narrow", "w": 40, "d": 28, "h": 202, "color": "#f0efea"},
+    {"type": "shelf", "name": "BILLY bookcase, low", "w": 80, "d": 28, "h": 106, "color": "#f0efea"},
+    {"type": "openshelf", "name": "IVAR shelving section", "w": 89, "d": 30, "h": 179, "color": "#d8b98a"},
+    {"type": "shelf", "name": "HEMNES bookcase", "w": 90, "d": 37, "h": 197, "color": "#ece6da"},
+    {"type": "tv", "name": "BESTÅ TV bench", "w": 180, "d": 42, "h": 38, "color": "#f0efea"},
+    {"type": "tv", "name": "LACK TV bench", "w": 160, "d": 35, "h": 36, "color": "#3a2f2a"},
+    {"type": "tv", "name": "HEMNES TV bench", "w": 148, "d": 47, "h": 57, "color": "#ece6da"},
+    {"type": "trolley", "name": "RÅSKOG trolley", "w": 45, "d": 35, "h": 77, "color": "#7e9c8f"},
+    {"type": "drawers", "name": "EKET cabinet with 2 drawers", "w": 35, "d": 35, "h": 35, "color": "#f0efea", "opt": {"rows": 2}},
+    {"type": "drawers", "name": "GULLABERG shoe cabinet", "w": 88, "d": 30, "h": 122, "color": "#9aa0a3", "opt": {"rows": 2}},
+  ], "IKEA"],
+  ["Beds & bedroom (UK sizes)", [
+    {"type": "bed", "name": "MALM bed frame, double", "w": 150, "d": 199, "h": 100, "color": "#f0efea"},
+    {"type": "bed", "name": "STORKLINTA bed frame, double", "w": 144, "d": 199, "h": 101, "color": "#f0efea"},
+    {"type": "bed", "name": "TARVA bed frame, double", "w": 144, "d": 199, "h": 92, "color": "#d9b98c"},
+    {"type": "bed", "name": "BRIMNES bed with storage, double", "w": 141, "d": 196, "h": 47, "color": "#f0efea"},
+    {"type": "bed", "name": "BRIMNES bed with headboard, double", "w": 141, "d": 224, "h": 111, "color": "#f0efea"},
+    {"type": "bed", "name": "SLATTUM upholstered bed, double", "w": 139, "d": 196, "h": 85, "color": "#5c6066"},
+    {"type": "drawers", "name": "MALM chest of 2 drawers", "w": 40, "d": 48, "h": 55, "color": "#f0efea", "opt": {"rows": 2}},
+    {"type": "drawers", "name": "MALM chest of 6 drawers, tall", "w": 80, "d": 48, "h": 123, "color": "#f0efea", "opt": {"rows": 6}},
+    {"type": "drawers", "name": "STORKLINTA chest of 6 drawers", "w": 140, "d": 50, "h": 75, "color": "#f0efea", "opt": {"rows": 3, "cols": 2}},
+    {"type": "drawers", "name": "STORKLINTA chest of 4 drawers", "w": 70, "d": 50, "h": 98, "color": "#f0efea", "opt": {"rows": 4}},
+    {"type": "drawers", "name": "STORKLINTA chest of 3 drawers", "w": 70, "d": 50, "h": 75, "color": "#f0efea", "opt": {"rows": 3}},
+    {"type": "drawers", "name": "HEMNES chest of 3 drawers", "w": 108, "d": 50, "h": 96, "color": "#ece6da", "opt": {"rows": 3}},
+    {"type": "drawers", "name": "GULLABERG chest of 8 drawers", "w": 168, "d": 48, "h": 100, "color": "#ece6da", "opt": {"rows": 4, "cols": 2}},
+    {"type": "drawers", "name": "NORDLI chest of 3 drawers", "w": 80, "d": 47, "h": 76, "color": "#f0efea", "opt": {"rows": 3}},
+    {"type": "drawers", "name": "RAST chest of 3 drawers", "w": 60, "d": 35, "h": 59, "color": "#d8b98a", "opt": {"rows": 3}},
+    {"type": "drawers", "name": "HEMNES bedside table", "w": 46, "d": 35, "h": 70, "color": "#ece6da", "opt": {"rows": 2}},
+    {"type": "wardrobe", "name": "PAX wardrobe, 100 wide", "w": 100, "d": 60, "h": 201, "color": "#f0efea", "opt": {"doors": 2}},
+    {"type": "wardrobe", "name": "PAX wardrobe, 150 wide", "w": 150, "d": 60, "h": 201, "color": "#f0efea", "opt": {"doors": 3}},
+    {"type": "wardrobe", "name": "PAX wardrobe, 100 wide, tall 236", "w": 100, "d": 60, "h": 236, "color": "#f0efea", "opt": {"doors": 2}},
+    {"type": "wardrobe", "name": "BRIMNES wardrobe, 2 doors", "w": 78, "d": 50, "h": 190, "color": "#f0efea", "opt": {"doors": 2}},
+    {"type": "wardrobe", "name": "KLEPPSTAD wardrobe, 2 doors", "w": 79, "d": 55, "h": 176, "color": "#f0efea", "opt": {"doors": 2}},
+    {"type": "mirror", "name": "NISSEDAL mirror", "w": 65, "d": 4, "h": 150, "color": "#2c2c2e"},
+  ], "IKEA"],
+  ["Rugs, lamps & plants", [
+    {"type": "rug", "name": "STOCKHOLM rug", "w": 170, "d": 240, "h": 1, "color": "#3d3a36"},
+    {"type": "rug", "name": "LOHALS rug", "w": 160, "d": 230, "h": 1, "color": "#c9b48f"},
+    {"type": "lamp", "name": "HEKTAR floor lamp", "w": 34, "d": 34, "h": 181, "color": "#3b3d40"},
+    {"type": "lamp", "name": "ÅRSTID floor lamp", "w": 36, "d": 36, "h": 155, "color": "#c8a45c"},
+    {"type": "lamp", "name": "NYMÅNE floor lamp", "w": 25, "d": 25, "h": 170, "color": "#f0efea"},
+    {"type": "plant", "name": "FEJKA weeping fig, large", "w": 80, "d": 80, "h": 210, "color": "#4f7a4a"},
+    {"type": "plant", "name": "FEJKA kentia palm", "w": 70, "d": 70, "h": 180, "color": "#4f7a4a"},
+  ], "IKEA"],
 ];
 const DEFAULT_COLOR = { sofa: "#5d7183", bed: "#8fa3b8", table: "#b5865a", chair: "#b5865a", desk: "#e8e8e6", deskchair: "#2b2f33",
-  tv: "#e8e8e6", shelf: "#b5865a", rug: "#a68b6d", cabinet: "#b5865a", drawers: "#b5865a", wardrobe: "#e8e8e6", plant: "#4f7a4a", box: "#c9b48f" };
+  tv: "#e8e8e6", shelf: "#b5865a", rug: "#a68b6d", cabinet: "#b5865a", drawers: "#b5865a", wardrobe: "#e8e8e6", plant: "#4f7a4a", box: "#c9b48f",
+  cubes: "#f0efea", openshelf: "#d8b98a", cornersofa: "#4a4f55", lounge: "#cdbfa6", roundtable: "#f0efea", trolley: "#7e9c8f", lamp: "#3b3d40", mirror: "#2c2c2e" };
 const SWATCHES = ["#5d7183", "#7a8f6a", "#b5865a", "#e8e8e6", "#2b2f33", "#b0574a"];
 
 // Example arrangement (flat coordinates in metres: x east, z = minus plan-north; rot in degrees, 0 = front faces down the plan)
@@ -630,6 +733,8 @@ function makeMats(it) {
     linen: new THREE.MeshStandardMaterial({ color: "#f1ede6", roughness: 0.9 }),
     dark: new THREE.MeshStandardMaterial({ color: "#26292c", roughness: 0.5 }),
     green: new THREE.MeshStandardMaterial({ color: "#4f7a4a", roughness: 0.9 }),
+    mirror: new THREE.MeshStandardMaterial({ color: "#c9d6dd", roughness: 0.05, metalness: 0.3 }),
+    shade: new THREE.MeshStandardMaterial({ color: "#f3eee4", roughness: 0.9, side: THREE.DoubleSide }),
   };
 }
 const unitBox = new THREE.BoxGeometry(1, 1, 1);
@@ -653,6 +758,15 @@ function legs(g, w, d, h, inset, s, mat) {
     box(g, cx - s, cx + s, 0, h, cz - s, cz + s, mat);
   }
 }
+function beam(g, a, b, thick, width, mat) {
+  const A = new THREE.Vector3(...a), Bv = new THREE.Vector3(...b), v = Bv.clone().sub(A);
+  const m = new THREE.Mesh(unitBox, mat);
+  m.scale.set(width, thick, v.length());
+  m.position.copy(A).add(Bv).multiplyScalar(0.5);
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), v.normalize());
+  m.castShadow = m.receiveShadow = true;
+  g.add(m);
+}
 // local frame: x = width, y = up, z = depth; front faces +z
 const BUILD = {
   bed(g, w, d, h, M) {
@@ -668,8 +782,8 @@ const BUILD = {
     }
     box(g, -w / 2 + 0.005, w / 2 - 0.005, 0.5, 0.57, -d / 2 + 0.6, d / 2 - 0.005, M.main);
   },
-  sofa(g, w, d, h, M) {
-    const arm = Math.min(0.16, w * 0.15);
+  sofa(g, w, d, h, M, it) {
+    const arm = Math.min(it?.opt?.arm ?? 0.16, w * 0.2);
     box(g, -w / 2 + 0.03, w / 2 - 0.03, 0, 0.08, -d / 2 + 0.03, d / 2 - 0.03, M.dark);
     box(g, -w / 2, w / 2, 0.08, 0.42, -d / 2, d / 2, M.main);
     box(g, -w / 2 + arm, w / 2 - arm, 0.42, 0.5, -d / 2 + 0.2, d / 2 - 0.02, M.main);
@@ -677,11 +791,77 @@ const BUILD = {
     box(g, -w / 2, -w / 2 + arm, 0.42, 0.62, -d / 2, d / 2, M.main);
     box(g, w / 2 - arm, w / 2, 0.42, 0.62, -d / 2, d / 2, M.main);
   },
-  table(g, w, d, h, M) {
-    box(g, -w / 2, w / 2, h - 0.035, h, -d / 2, d / 2, M.main);
-    legs(g, w, d, h - 0.035, 0.06, 0.025, M.main);
+  table(g, w, d, h, M, it) {
+    const top = it?.opt?.top ?? 0.035, leg = it?.opt?.leg ?? 0.025;
+    box(g, -w / 2, w / 2, h - top, h, -d / 2, d / 2, M.main);
+    legs(g, w, d, h - top, it?.opt?.inset ?? 0.06, leg, M.main);
   },
-  desk(g, w, d, h, M) { BUILD.table(g, w, d, h, M); },
+  desk(g, w, d, h, M, it) {
+    BUILD.table(g, w, d, h, M, it);
+    if (it?.opt?.pedestal) box(g, w / 2 - 0.4, w / 2 - 0.04, 0, h - 0.035, -d / 2 + 0.02, d / 2 - 0.02, M.main);
+  },
+  roundtable(g, w, d, h, M) {
+    cyl(g, w / 2, w / 2, h - 0.03, h, M.main, 40);
+    cyl(g, 0.05, 0.05, 0.03, h - 0.03, M.main);
+    cyl(g, Math.min(0.3, w / 3), Math.min(0.3, w / 3), 0, 0.03, M.main, 32);
+  },
+  cubes(g, w, d, h, M, it) {
+    const t = 0.04, t2 = 0.016;
+    const cols = it?.opt?.cols || Math.max(1, Math.round(w / 0.37)), rows = it?.opt?.rows || Math.max(1, Math.round(h / 0.37));
+    box(g, -w / 2, w / 2, 0, t, -d / 2, d / 2, M.main);
+    box(g, -w / 2, w / 2, h - t, h, -d / 2, d / 2, M.main);
+    box(g, -w / 2, -w / 2 + t, t, h - t, -d / 2, d / 2, M.main);
+    box(g, w / 2 - t, w / 2, t, h - t, -d / 2, d / 2, M.main);
+    for (let i = 1; i < cols; i++) { const x = -w / 2 + t + ((w - 2 * t) * i) / cols; box(g, x - t2 / 2, x + t2 / 2, t, h - t, -d / 2, d / 2, M.main); }
+    for (let j = 1; j < rows; j++) { const y = t + ((h - 2 * t) * j) / rows; box(g, -w / 2 + t, w / 2 - t, y - t2 / 2, y + t2 / 2, -d / 2, d / 2, M.main); }
+  },
+  openshelf(g, w, d, h, M, it) {
+    const p = 0.03;
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(g, sx * w / 2 - (sx > 0 ? p : 0), sx * w / 2 + (sx < 0 ? p : 0), 0, h, sz * d / 2 - (sz > 0 ? p : 0), sz * d / 2 + (sz < 0 ? p : 0), M.main);
+    const n = it?.opt?.shelves || Math.max(3, Math.round(h / 0.35));
+    for (let i = 0; i < n; i++) { const y = 0.1 + ((h - 0.14) * i) / (n - 1); box(g, -w / 2 + p, w / 2 - p, y, y + 0.02, -d / 2, d / 2, M.main); }
+  },
+  cornersofa(g, w, d, h, M, it) {
+    const right = (it?.opt?.variant || "R") === "R";
+    const sd = Math.min(it?.opt?.seat || 0.9, d - 0.3), cw = Math.min(it?.opt?.chaise || 0.9, w - 0.6), arm = it?.opt?.arm ?? 0.15;
+    const seat = Math.min(0.45, h - 0.2), z0 = -d / 2, zm = z0 + sd;
+    const cx0 = right ? w / 2 - cw : -w / 2, cx1 = cx0 + cw;
+    box(g, -w / 2 + 0.03, w / 2 - 0.03, 0, 0.06, z0 + 0.03, zm - 0.03, M.dark);
+    box(g, cx0 + 0.03, cx1 - 0.03, 0, 0.06, zm - 0.03, d / 2 - 0.03, M.dark);
+    box(g, -w / 2, w / 2, 0.06, seat - 0.07, z0, zm, M.main);
+    box(g, cx0, cx1, 0.06, seat - 0.07, zm, d / 2, M.main);
+    box(g, -w / 2 + (right ? arm : 0), w / 2 - (right ? 0 : arm), seat - 0.07, seat, z0 + 0.2, zm, M.main);
+    box(g, cx0 + 0.01, cx1 - 0.01, seat - 0.07, seat, zm, d / 2 - 0.01, M.main);
+    box(g, -w / 2, w / 2, seat - 0.07, h, z0, z0 + 0.2, M.main);
+    const ax0 = right ? -w / 2 : w / 2 - arm;
+    box(g, ax0, ax0 + arm, seat - 0.07, Math.min(h, seat + 0.2), z0, zm, M.main);
+  },
+  lounge(g, w, d, h, M) {
+    for (const sx of [-1, 1]) {
+      const x = sx * (w / 2 - 0.025);
+      const rail = (a, b) => { const m0 = [x, ...a], m1 = [x, ...b]; beam(g, m0, m1, 0.035, 0.035, M.wood); };
+      rail([0.02, d / 2 - 0.02], [0.02, -d / 2 + 0.05]);
+      rail([0.02, d / 2 - 0.02], [0.55, d / 2 - 0.22]);
+      rail([0.55, d / 2 - 0.22], [0.5, -d / 2 + 0.2]);
+    }
+    beam(g, [0, 0.4, d / 2 - 0.05], [0, 0.3, -d / 2 + 0.25], 0.09, w - 0.08, M.main);
+    beam(g, [0, 0.33, -d / 2 + 0.24], [0, h - 0.02, -d / 2 + 0.03], 0.09, w - 0.1, M.main);
+  },
+  trolley(g, w, d, h, M) {
+    const p = 0.015;
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) box(g, sx * (w / 2 - p) - p, sx * (w / 2 - p) + p, 0.03, h, sz * (d / 2 - p) - p, sz * (d / 2 - p) + p, M.main);
+    for (const y of [0.1, h * 0.5, h - 0.05]) { box(g, -w / 2, w / 2, y, y + 0.01, -d / 2, d / 2, M.main); box(g, -w / 2, w / 2, y, y + 0.05, -d / 2, -d / 2 + 0.01, M.main); box(g, -w / 2, w / 2, y, y + 0.05, d / 2 - 0.01, d / 2, M.main); }
+  },
+  lamp(g, w, d, h, M) {
+    const r = Math.min(w, d) / 2;
+    cyl(g, r * 0.75, r * 0.75, 0, 0.03, M.dark, 24);
+    cyl(g, 0.012, 0.012, 0.03, h - 0.2, M.dark, 8);
+    cyl(g, r, r * 0.8, h - 0.3, h, M.shade, 24);
+  },
+  mirror(g, w, d, h, M) {
+    box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main);
+    box(g, -w / 2 + 0.03, w / 2 - 0.03, 0.03, h - 0.03, d / 2, d / 2 + 0.003, M.mirror);
+  },
   chair(g, w, d, h, M) {
     const sw = w / 2 - 0.01, sd = d / 2 - 0.01;
     box(g, -sw, sw, 0.43, 0.47, -sd, sd, M.main);
@@ -716,18 +896,23 @@ const BUILD = {
     box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main);
     box(g, -w / 2 + 0.03, w / 2 - 0.03, h - 0.17, h - 0.165, d / 2, d / 2 + 0.003, M.dark);
   },
-  drawers(g, w, d, h, M) {
+  drawers(g, w, d, h, M, it) {
     box(g, -w / 2, w / 2, 0.04, h, -d / 2, d / 2, M.main);
-    for (let i = 1; i < 3; i++) {
-      const y = 0.04 + ((h - 0.04) * i) / 3;
-      box(g, -w / 2 + 0.03, w / 2 - 0.03, y - 0.003, y + 0.003, d / 2, d / 2 + 0.003, M.dark);
+    const rows = it?.opt?.rows || clamp(Math.round((h - 0.06) / 0.24), 2, 6), cols = it?.opt?.cols || (w > 1.15 ? 2 : 1);
+    for (let i = 1; i < rows; i++) {
+      const y = 0.04 + ((h - 0.04) * i) / rows;
+      box(g, -w / 2 + 0.02, w / 2 - 0.02, y - 0.003, y + 0.003, d / 2, d / 2 + 0.003, M.dark);
     }
+    for (let c = 1; c < cols; c++) { const x = -w / 2 + (w * c) / cols; box(g, x - 0.003, x + 0.003, 0.05, h - 0.01, d / 2, d / 2 + 0.003, M.dark); }
   },
-  wardrobe(g, w, d, h, M) {
+  wardrobe(g, w, d, h, M, it) {
     box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main);
-    box(g, -0.003, 0.003, 0.05, h - 0.05, d / 2, d / 2 + 0.003, M.dark);
-    box(g, -0.05, -0.03, h / 2 - 0.15, h / 2 + 0.15, d / 2, d / 2 + 0.02, M.dark);
-    box(g, 0.03, 0.05, h / 2 - 0.15, h / 2 + 0.15, d / 2, d / 2 + 0.02, M.dark);
+    const n = it?.opt?.doors || Math.max(1, Math.round(w / 0.5));
+    for (let i = 0; i <= n; i++) {
+      const x = -w / 2 + (w * i) / n;
+      if (i > 0 && i < n) box(g, x - 0.003, x + 0.003, 0.05, h - 0.05, d / 2, d / 2 + 0.003, M.dark);
+      if (i < n) { const hx = i % 2 ? x + 0.04 : x + w / n - 0.06; box(g, hx, hx + 0.02, h / 2 - 0.15, h / 2 + 0.15, d / 2, d / 2 + 0.02, M.dark); }
+    }
   },
   rug(g, w, d, h, M) { box(g, -w / 2, w / 2, 0, 0.012, -d / 2, d / 2, M.main); },
   plant(g, w, d, h, M) {
@@ -749,7 +934,7 @@ function buildItem(it) {
   g.userData.itemId = it.id;
   const M = makeMats(it);
   g.userData.mats = Object.values(M);
-  (BUILD[it.type] || BUILD.box)(g, it.w / 100, it.d / 100, it.h / 100, M);
+  (BUILD[it.type] || BUILD.box)(g, it.w / 100, it.d / 100, it.h / 100, M, it);
   // footprint outline (shown when selected / colliding)
   const hw = it.w / 200, hd = it.d / 200;
   const pts = [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd], [-hw, -hd]].map(([x, z]) => new THREE.Vector3(x, 0.015, z));
@@ -813,16 +998,23 @@ const SEATS = new Set(["chair", "deskchair"]), TABLES = new Set(["table", "desk"
 const tucks = (a, b) => SEATS.has(a.type) && TABLES.has(b.type); // chairs may slide under tables
 
 function collides(it) {
-  if (it.type === "rug") return false;
+  if (it.type === "rug") return null;
   const r = rectOf(it), h = it.h / 100;
+  const ceil = META?.ceiling || 2.26;
+  if (h > ceil + 0.004) return "Taller than the 2.26 m ceiling";
+  // sloped ceiling strips along the front (north) wall and the bedroom's back wall
+  const cs = corners(r), north = -B[3], south = -B[2];
+  const dN = Math.min(...cs.map((c) => c[1] - north)), dS = Math.min(...cs.filter((c) => c[0] > 2.1).map((c) => south - c[1]));
+  const slopeAt = (t) => 1.98 + ((ceil - 1.98) * Math.max(0, t)) / 0.45;
+  if ((dN < 0.45 && h > slopeAt(dN) + 0.004) || (dS < 0.45 && h > slopeAt(dS) + 0.004)) return "Too tall for the sloped ceiling here";
   for (const o of OBST) {
-    if (o.y0 < h - 0.01 && o.y1 > 0.01 && overlap(r, aabbRect(o))) return true;
+    if (o.y0 < h - 0.01 && o.y1 > 0.01 && overlap(r, aabbRect(o))) return "Hits a wall or fixture";
   }
   for (const other of state.items) {
     if (other === it || other.type === "rug" || tucks(it, other) || tucks(other, it)) continue;
-    if (overlap(r, rectOf(other))) return true;
+    if (overlap(r, rectOf(other))) return "Overlaps " + (other.name || "another item");
   }
-  return false;
+  return null;
 }
 function refreshHighlights() {
   for (const it of state.items) {
@@ -840,7 +1032,7 @@ function refreshHighlights() {
   const it = itemById(state.selected);
   if (it) {
     const pill = $("iFit");
-    pill.textContent = it.type === "rug" ? "Rug: sits under furniture" : it._bad ? "Overlaps a wall, fixture or item" : "Fits";
+    pill.textContent = it.type === "rug" ? "Rug: sits under furniture" : it._bad || "Fits";
     pill.className = "pill " + (it._bad ? "bad" : "ok");
   }
 }
@@ -916,6 +1108,7 @@ function updateSelectionUI() {
   set($("iD"), Math.round(it.d));
   set($("iH"), Math.round(it.h));
   set($("iR"), Math.round(((it.rot % 360) + 360) % 360));
+  $("flipItem").hidden = it.type !== "cornersofa";
   const col = it.color || DEFAULT_COLOR[it.type];
   for (const b of $("swatches").children) b.setAttribute("aria-pressed", b.dataset.c === col);
 }
@@ -943,7 +1136,7 @@ function editNum(id, key, min, max) {
 }
 editNum("iW", "w", 5, 600);
 editNum("iD", "d", 5, 600);
-editNum("iH", "h", 1, 226);
+editNum("iH", "h", 1, 300);
 editNum("iR", "rot", -720, 720);
 $("iName").addEventListener("input", (e) => { const it = itemById(state.selected); if (it) { it.name = e.target.value; changed(); } });
 function rotate(by) {
@@ -958,6 +1151,14 @@ $("rotL").onclick = () => rotate(15);
 $("rotR").onclick = () => rotate(-15);
 $("rot90").onclick = () => rotate(90);
 $("closeItem").onclick = () => select(null);
+$("flipItem").onclick = () => {
+  const it = itemById(state.selected);
+  if (!it) return;
+  it.opt = { ...(it.opt || {}), variant: it.opt?.variant === "L" ? "R" : "L" };
+  buildItem(it);
+  refreshHighlights();
+  changed();
+};
 $("dupItem").onclick = () => {
   const it = itemById(state.selected);
   if (!it) return;
@@ -1026,17 +1227,26 @@ function addItem(tpl) {
   const t = mode === "walk"
     ? { x: walk.pos.x - Math.sin(walk.yaw) * 1.3, z: walk.pos.z - Math.cos(walk.yaw) * 1.3 }
     : controls().target;
-  const it = { id: newId(), type: tpl.type, name: tpl.name, w: tpl.w, d: tpl.d, h: tpl.h, x: clamp(t.x, B[0] + 0.5, B[1] - 0.5), z: clamp(t.z, -B[3] + 0.5, -B[2] - 0.5), rot: 0 };
+  const it = { id: newId(), type: tpl.type, name: tpl.name, w: tpl.w, d: tpl.d, h: tpl.h, ...(tpl.opt ? { opt: { ...tpl.opt } } : {}), ...(tpl.color ? { color: tpl.color } : {}), x: clamp(t.x, B[0] + 0.5, B[1] - 0.5), z: clamp(t.z, -B[3] + 0.5, -B[2] - 0.5), rot: 0 };
+  // land somewhere free: the view centre if it's open, else the middle of a room
+  if (mode !== "walk") {
+    for (const [x, z] of [[it.x, it.z], [1.6, -7.0], [4.1, -1.6], [1.5, -8.6], [1.3, -3.4], [4.3, -8.6]]) {
+      Object.assign(it, { x, z });
+      if (!collides(it)) break;
+    }
+  }
   state.items.push(it);
   buildItem(it);
   if (mode !== "walk") select(it.id); else refreshHighlights();
   changed();
 }
-for (const [group, list] of CATALOG) {
+const fold = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/×/g, "x").toLowerCase();
+for (const [group, list, brand] of CATALOG) {
   const wrap = document.createElement("div");
   wrap.className = "cat-group";
   const h = document.createElement("h3");
-  h.textContent = group;
+  if (brand) { const b = document.createElement("span"); b.className = "brand"; b.textContent = brand; h.appendChild(b); }
+  h.appendChild(document.createTextNode(group));
   wrap.appendChild(h);
   for (const tpl of list) {
     const b = document.createElement("button");
@@ -1048,13 +1258,29 @@ for (const [group, list] of CATALOG) {
     d.textContent = `${tpl.w} × ${tpl.d}`;
     b.append(n, d);
     b.onclick = () => addItem(tpl);
+    b.dataset.search = fold(`${brand || ""} ${group} ${tpl.name} ${tpl.type}`);
     wrap.appendChild(b);
   }
   $("catalog").appendChild(wrap);
 }
+$("catSearch").addEventListener("input", (e) => {
+  const words = fold(e.target.value).split(/\s+/).filter(Boolean);
+  let any = false;
+  for (const g of $("catalog").children) {
+    let shown = 0;
+    for (const b of g.querySelectorAll(".cat-item")) {
+      const ok = words.every((w) => b.dataset.search.includes(w));
+      b.hidden = !ok;
+      shown += ok;
+    }
+    g.hidden = !shown;
+    any ||= shown > 0;
+  }
+  $("catNone").hidden = any;
+});
 $("customForm").addEventListener("submit", (e) => {
   e.preventDefault();
-  const w = clamp(+$("cW").value || 100, 5, 600), d = clamp(+$("cD").value || 50, 5, 600), h = clamp(+$("cH").value || 50, 1, 226);
+  const w = clamp(+$("cW").value || 100, 5, 600), d = clamp(+$("cD").value || 50, 5, 600), h = clamp(+$("cH").value || 50, 1, 300);
   addItem({ type: "box", name: $("cName").value.trim() || "Custom piece", w, d, h });
 });
 
