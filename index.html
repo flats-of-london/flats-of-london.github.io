@@ -1,0 +1,1461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,-apple-system,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Fourth Floor Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-height drafting table. Catalogue + layouts in a side rail, the flat fills the rest; tools float on the canvas. */
+:root {
+  --bg: #e9eef0;
+  --panel: #f7f9fa;
+  --raised: #ffffff;
+  --ink: #1b2a32;
+  --muted: #5b6b73;
+  --line: #cfd8dc;
+  --accent: #a8622a;      /* oak, from the flat's floor */
+  --accent-ink: #ffffff;
+  --select: #2a63d4;
+  --danger: #c4372c;
+  --ok: #2b7a52;
+  --scene: #dfe6e9;
+  --font-ui: "Barlow Semi Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1518; --panel: #151d21; --raised: #1c262b; --ink: #e2e9ec; --muted: #8d9da5;
+    --line: #2a3840; --accent: #d08b4b; --accent-ink: #1a1208; --select: #6c9bff; --danger: #ff6d61;
+    --ok: #5fc391; --scene: #0c1215; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1518; --panel: #151d21; --raised: #1c262b; --ink: #e2e9ec; --muted: #8d9da5;
+  --line: #2a3840; --accent: #d08b4b; --accent-ink: #1a1208; --select: #6c9bff; --danger: #ff6d61;
+  --ok: #5fc391; --scene: #0c1215; color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; overflow: hidden; }
+button, input, select { font: inherit; color: inherit; }
+.app { height: 100%; display: grid; grid-template-columns: 300px minmax(0, 1fr); }
+
+/* ---------- side rail */
+.rail { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; display: flex; flex-direction: column; gap: 18px; padding: 18px 16px 24px; min-height: 0; }
+.brand h1 { font-size: 22px; font-weight: 700; letter-spacing: .01em; margin: 0; text-wrap: balance; }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+.brand .area { font-family: var(--font-mono); font-size: 12px; }
+.sec { display: flex; flex-direction: column; gap: 8px; }
+.sec h2 { margin: 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+.row { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.field { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.field label { font-size: 12px; color: var(--muted); letter-spacing: .03em; }
+input[type=text], input[type=number], select {
+  background: var(--raised); border: 1px solid var(--line); border-radius: var(--r); padding: 6px 8px; min-width: 0; width: 100%;
+}
+input[type=number] { font-family: var(--font-mono); font-size: 13px; font-variant-numeric: tabular-nums; }
+input:focus-visible, select:focus-visible, button:focus-visible { outline: 2px solid var(--select); outline-offset: 1px; }
+.btn { border: 1px solid var(--line); background: var(--raised); border-radius: var(--r); padding: 5px 10px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.danger { color: var(--danger); }
+.btn.danger.armed { background: var(--danger); border-color: var(--danger); color: var(--raised); }
+.btn[disabled] { opacity: .45; cursor: default; }
+
+.cat-group { display: flex; flex-direction: column; gap: 2px; }
+.cat-group h3 { margin: 6px 0 2px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.cat-item { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; text-align: left; width: 100%;
+  border: 1px solid transparent; background: none; border-radius: var(--r); padding: 5px 8px; cursor: pointer; }
+.cat-item:hover { background: var(--raised); border-color: var(--line); }
+.cat-item .dims { font-family: var(--font-mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.custom { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.custom .wide { grid-column: 1 / -1; }
+.note { color: var(--muted); font-size: 13px; line-height: 1.4; margin: 0; }
+.empty { border: 1px dashed var(--line); border-radius: var(--r); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+
+/* ---------- stage */
+.stage { position: relative; min-height: 0; min-width: 0; overflow: hidden; background: var(--scene); }
+.stage canvas { display: block; touch-action: none; }
+.labels { position: absolute; inset: 0; pointer-events: none; }
+.room-label { font-family: var(--font-ui); font-size: 13px; font-weight: 600; color: var(--ink); text-align: center; white-space: pre; line-height: 1.15;
+  background: color-mix(in srgb, var(--panel) 78%, transparent); padding: 2px 6px; border-radius: 4px; }
+.room-label small { font-family: var(--font-mono); font-weight: 400; font-size: 11px; color: var(--muted); }
+.gap-label { font-family: var(--font-mono); font-size: 11px; font-weight: 500; color: var(--raised); background: var(--select); padding: 1px 5px; border-radius: 3px; font-variant-numeric: tabular-nums; }
+
+.toolbar { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; gap: 8px; flex-wrap: wrap; align-items: flex-start; pointer-events: none; }
+.toolbar > * { pointer-events: auto; }
+.seg { display: inline-flex; background: var(--raised); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+.seg button { border: 0; background: none; padding: 6px 12px; cursor: pointer; }
+.seg button[aria-pressed=true] { background: var(--ink); color: var(--panel); font-weight: 600; }
+.chips { display: inline-flex; flex-wrap: wrap; gap: 4px; background: var(--raised); border: 1px solid var(--line); border-radius: var(--r); padding: 3px; }
+.chip { border: 0; background: none; padding: 3px 9px; border-radius: 4px; cursor: pointer; color: var(--muted); }
+.chip[aria-pressed=true] { color: var(--ink); background: var(--bg); font-weight: 600; }
+.toolbar select { width: auto; background: var(--raised); }
+.status { margin-left: auto; font-size: 13px; color: var(--muted); background: var(--raised); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; }
+.status.warn { color: var(--danger); }
+
+.inspector { position: absolute; left: 12px; bottom: 12px; width: min(360px, calc(100% - 24px)); background: var(--raised); border: 1px solid var(--line);
+  border-radius: 8px; box-shadow: 0 6px 24px rgb(0 0 0 / .14); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.inspector .head { display: flex; gap: 8px; align-items: center; }
+.inspector .head input { font-weight: 600; }
+.dims3 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.pill { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.pill.ok { color: var(--ok); }
+.pill.bad { color: var(--danger); }
+.swatches { display: flex; gap: 6px; }
+.sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--raised); box-shadow: 0 0 0 1px var(--line); cursor: pointer; padding: 0; }
+.sw[aria-pressed=true] { box-shadow: 0 0 0 2px var(--select); }
+.hint { position: absolute; left: 12px; bottom: 12px; right: 12px; pointer-events: none; color: var(--muted); font-size: 13px; }
+.hint span { background: color-mix(in srgb, var(--panel) 85%, transparent); padding: 3px 8px; border-radius: 4px; }
+.toast { position: absolute; right: 12px; bottom: 12px; background: var(--ink); color: var(--panel); border-radius: 8px; padding: 8px 10px 8px 14px; display: flex; gap: 12px; align-items: center; }
+.toast button { background: none; border: 1px solid currentColor; color: inherit; border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+.loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 15px; pointer-events: none; }
+
+.view-opts { display: contents; }
+.walk-hud { position: absolute; inset: 0; pointer-events: none; }
+.crosshair { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--raised); box-shadow: 0 0 0 1px var(--ink); opacity: .85; }
+.lock-prompt { position: absolute; inset: 0; display: grid; place-items: center; }
+.lock-prompt span { background: color-mix(in srgb, var(--ink) 82%, transparent); color: var(--panel); padding: 8px 16px; border-radius: 999px; font-weight: 600; }
+.walk-help { position: absolute; left: 12px; bottom: 12px; pointer-events: auto; background: var(--raised); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; max-width: min(380px, calc(100% - 24px)); font-size: 13px; line-height: 1.5; }
+.walk-help kbd { font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; background: var(--bg); }
+.walk-help .touch { display: none; }
+@media (pointer: coarse) { .walk-help .kb { display: none; } .walk-help .touch { display: inline; } }
+.minimap { position: absolute; right: 12px; bottom: 12px; border: 2px solid var(--raised); border-radius: 6px; box-shadow: 0 4px 16px rgb(0 0 0 / .22); }
+.joy { position: absolute; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 2px solid var(--raised);
+  background: color-mix(in srgb, var(--ink) 20%, transparent); }
+.joy i { position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; background: var(--raised); }
+
+@media (max-width: 760px) {
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 40%); }
+  .stage { grid-row: 1; }
+  .rail { grid-row: 2; border-right: 0; border-top: 1px solid var(--line); padding-top: 12px; }
+  .brand p { display: none; }
+  .status { margin-left: 0; }
+  .hint { display: none; }
+  .inspector { padding: 10px; gap: 8px; }
+}
+@media (prefers-reduced-motion: no-preference) { .btn, .cat-item, .chip { transition: background .12s, border-color .12s; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="rail" aria-label="Layouts and furniture">
+    <div class="brand">
+      <h1>Fourth Floor Planner</h1>
+      <p>1-bed flat, <span class="area">53.32 m² · ceiling 2.26 m</span></p>
+    </div>
+
+    <section class="sec" aria-labelledby="h-layouts">
+      <h2 id="h-layouts">Layout</h2>
+      <div id="layoutEmpty" class="empty" hidden>
+        <p class="note">No layouts saved yet. Start from the example arrangement or an empty flat.</p>
+        <div class="row">
+          <button class="btn primary" id="startExample">Use example</button>
+          <button class="btn" id="startEmpty">Start empty</button>
+        </div>
+      </div>
+      <div id="layoutControls" class="sec">
+        <div class="row">
+          <select id="layoutSelect" aria-label="Choose layout"></select>
+        </div>
+        <div class="field">
+          <label for="layoutName">Layout name</label>
+          <input type="text" id="layoutName" maxlength="60">
+        </div>
+        <div class="row">
+          <button class="btn" id="newLayout">New</button>
+          <button class="btn" id="copyLayout">Copy</button>
+          <button class="btn" id="exampleLayout">New from example</button>
+          <button class="btn danger" id="deleteLayout">Delete</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" aria-labelledby="h-cat">
+      <h2 id="h-cat">Add furniture</h2>
+      <p class="note">Sizes are typical UK sizes in cm (width × depth). You can change them after adding.</p>
+      <div id="catalog"></div>
+    </section>
+
+    <section class="sec" aria-labelledby="h-custom">
+      <h2 id="h-custom">Your own piece</h2>
+      <form class="custom" id="customForm">
+        <div class="field wide"><label for="cName">Name</label><input type="text" id="cName" value="My sofa" maxlength="40"></div>
+        <div class="field"><label for="cW">Width cm</label><input type="number" id="cW" value="180" min="5" max="600"></div>
+        <div class="field"><label for="cD">Depth cm</label><input type="number" id="cD" value="85" min="5" max="600"></div>
+        <div class="field"><label for="cH">Height cm</label><input type="number" id="cH" value="80" min="1" max="226"></div>
+        <button class="btn primary wide" type="submit">Add box</button>
+      </form>
+    </section>
+  </aside>
+
+  <main class="stage" id="stage">
+    <div class="loading" id="loading">Loading the flat…</div>
+    <div class="toolbar">
+      <div class="seg" role="group" aria-label="View">
+        <button id="v3d" aria-pressed="true">3D</button>
+        <button id="vTop" aria-pressed="false">Plan</button>
+        <button id="vWalk" aria-pressed="false">Walk</button>
+      </div>
+      <div class="view-opts" id="viewOpts">
+      <select id="goto" aria-label="Go to room">
+        <option value="overview">Overview</option>
+        <option value="reception">Eye level: reception</option>
+        <option value="dining">Eye level: dining &amp; kitchen</option>
+        <option value="bedroom">Eye level: bedroom</option>
+        <option value="bathroom">Eye level: bathroom</option>
+        <option value="corridor">Eye level: corridor</option>
+      </select>
+      <div class="chips" role="group" aria-label="Display">
+        <button class="chip" id="tCut" aria-pressed="false">Cut walls</button>
+        <button class="chip" id="tCeil" aria-pressed="false">Ceiling</button>
+        <button class="chip" id="tLabels" aria-pressed="true">Room names</button>
+        <button class="chip" id="tSnap" aria-pressed="true">Snap 5 cm</button>
+      </div>
+      </div>
+      <span class="status" id="status" role="status">Connecting…</span>
+    </div>
+    <div class="hint" id="hint"><span>Drag furniture to move it · R rotates · Delete removes · drag empty space to look around</span></div>
+
+    <div class="walk-hud" id="walkHud" hidden>
+      <div class="crosshair"></div>
+      <div class="lock-prompt" id="lockPrompt" hidden><span>Click to look around with the mouse</span></div>
+      <div class="minimap" id="minimap"></div>
+      <div class="joy" id="joy" hidden><i id="joyKnob"></i></div>
+      <div class="walk-help" id="walkHelp">
+        <span class="kb"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows to walk · mouse to look · <kbd>Shift</kbd> run · <kbd>Space</kbd> jump · <kbd>Esc</kbd> frees the mouse</span>
+        <span class="touch">Drag on the left half to walk, on the right half to look around.</span>
+        <div class="row"><button class="btn" id="walkExit">Leave walk mode</button><button class="btn" id="walkRespawn">Back to the door</button></div>
+      </div>
+    </div>
+    <div class="inspector" id="inspector" hidden>
+      <div class="head">
+        <input type="text" id="iName" aria-label="Item name" maxlength="40">
+        <span class="pill ok" id="iFit">Fits</span>
+      </div>
+      <div class="dims3">
+        <div class="field"><label for="iW">Width</label><input type="number" id="iW" min="5" max="600"></div>
+        <div class="field"><label for="iD">Depth</label><input type="number" id="iD" min="5" max="600"></div>
+        <div class="field"><label for="iH">Height</label><input type="number" id="iH" min="1" max="226"></div>
+        <div class="field"><label for="iR">Turn °</label><input type="number" id="iR" step="15"></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="rotL" title="Rotate 15° left">⟲ 15°</button>
+        <button class="btn" id="rot90" title="Rotate 90° (R)">Turn 90°</button>
+        <button class="btn" id="rotR" title="Rotate 15° right">15° ⟳</button>
+        <div class="swatches" id="swatches" role="group" aria-label="Colour"></div>
+      </div>
+      <div class="row">
+        <button class="btn" id="dupItem">Duplicate</button>
+        <button class="btn danger" id="delItem">Remove</button>
+        <button class="btn" id="closeItem" style="margin-left:auto">Done</button>
+      </div>
+    </div>
+    <div class="toast" id="toast" hidden><span id="toastText"></span><button id="toastUndo">Undo</button></div>
+  </main>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+
+const $ = (id) => document.getElementById(id);
+const DEG = Math.PI / 180;
+const EPS = 0.006;
+
+// ------------------------------------------------------------------ catalogue
+const CATALOG = [
+  ["Living room", [
+    { type: "sofa", name: "Sofa, 3-seat", w: 210, d: 90, h: 85 },
+    { type: "sofa", name: "Sofa, 2-seat", w: 160, d: 90, h: 85 },
+    { type: "sofa", name: "Armchair", w: 85, d: 85, h: 85 },
+    { type: "table", name: "Coffee table", w: 100, d: 50, h: 40 },
+    { type: "tv", name: "TV unit", w: 160, d: 40, h: 45 },
+    { type: "shelf", name: "Bookshelf", w: 80, d: 30, h: 180 },
+    { type: "rug", name: "Rug", w: 200, d: 140, h: 1 },
+  ]],
+  ["Dining & work", [
+    { type: "table", name: "Dining table", w: 120, d: 80, h: 75 },
+    { type: "table", name: "Dining table, large", w: 160, d: 90, h: 75 },
+    { type: "chair", name: "Dining chair", w: 45, d: 45, h: 90 },
+    { type: "desk", name: "Desk", w: 120, d: 60, h: 74 },
+    { type: "deskchair", name: "Desk chair", w: 60, d: 60, h: 105 },
+  ]],
+  ["Bedroom", [
+    { type: "bed", name: "Double bed (4'6\")", w: 145, d: 200, h: 105 },
+    { type: "bed", name: "King bed (5')", w: 160, d: 210, h: 105 },
+    { type: "bed", name: "Single bed", w: 100, d: 200, h: 95 },
+    { type: "cabinet", name: "Bedside table", w: 45, d: 40, h: 55 },
+    { type: "drawers", name: "Chest of drawers", w: 80, d: 45, h: 80 },
+    { type: "wardrobe", name: "Wardrobe", w: 100, d: 60, h: 200 },
+  ]],
+  ["Other", [
+    { type: "plant", name: "Plant", w: 40, d: 40, h: 120 },
+    { type: "box", name: "Storage boxes", w: 60, d: 40, h: 40 },
+  ]],
+];
+const DEFAULT_COLOR = { sofa: "#5d7183", bed: "#8fa3b8", table: "#b5865a", chair: "#b5865a", desk: "#e8e8e6", deskchair: "#2b2f33",
+  tv: "#e8e8e6", shelf: "#b5865a", rug: "#a68b6d", cabinet: "#b5865a", drawers: "#b5865a", wardrobe: "#e8e8e6", plant: "#4f7a4a", box: "#c9b48f" };
+const SWATCHES = ["#5d7183", "#7a8f6a", "#b5865a", "#e8e8e6", "#2b2f33", "#b0574a"];
+
+// Example arrangement (flat coordinates in metres: x east, z = minus plan-north; rot in degrees, 0 = front faces down the plan)
+const EXAMPLE = [
+  { type: "rug", name: "Rug", w: 200, d: 140, h: 1, x: 1.6, z: -6.6, rot: 90 },
+  { type: "sofa", name: "Sofa, 3-seat", w: 210, d: 90, h: 85, x: 0.45, z: -6.6, rot: 90 },
+  { type: "table", name: "Coffee table", w: 100, d: 50, h: 40, x: 1.55, z: -6.6, rot: 90 },
+  { type: "tv", name: "TV unit", w: 160, d: 40, h: 45, x: 2.85, z: -6.6, rot: -90 },
+  { type: "sofa", name: "Armchair", w: 85, d: 85, h: 85, x: 0.68, z: -9.0, rot: 45 },
+  { type: "shelf", name: "Bookshelf", w: 80, d: 30, h: 180, x: 2.8, z: -9.49, rot: 0 },
+  { type: "table", name: "Dining table", w: 120, d: 80, h: 75, x: 4.3, z: -8.65, rot: 0 },
+  { type: "chair", name: "Dining chair", w: 45, d: 45, h: 90, x: 4.0, z: -9.2, rot: 0 },
+  { type: "chair", name: "Dining chair", w: 45, d: 45, h: 90, x: 4.6, z: -9.2, rot: 0 },
+  { type: "chair", name: "Dining chair", w: 45, d: 45, h: 90, x: 4.0, z: -8.1, rot: 180 },
+  { type: "chair", name: "Dining chair", w: 45, d: 45, h: 90, x: 4.6, z: -8.1, rot: 180 },
+  { type: "bed", name: "Double bed (4'6\")", w: 145, d: 200, h: 105, x: 4.2, z: -2.0, rot: 0 },
+  { type: "cabinet", name: "Bedside table", w: 45, d: 40, h: 55, x: 5.2, z: -2.78, rot: 0 },
+  { type: "drawers", name: "Chest of drawers", w: 80, d: 45, h: 80, x: 5.305, z: -1.2, rot: -90 },
+  { type: "plant", name: "Plant", w: 40, d: 40, h: 120, x: 5.3, z: -0.25, rot: 0 },
+];
+
+// ------------------------------------------------------------------ three setup
+const stage = $("stage");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.localClippingEnabled = true;
+stage.prepend(renderer.domElement);
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.domElement.className = "labels";
+stage.insertBefore(labelRenderer.domElement, renderer.domElement.nextSibling);
+
+const scene = new THREE.Scene();
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function applyTheme() {
+  scene.background = new THREE.Color(mode === "walk" ? "#cfdde8" : css("--scene") || "#dfe6e9");
+  selColor.set(css("--select") || "#2a63d4");
+  badColor.set(css("--danger") || "#c4372c");
+  refreshHighlights();
+}
+const selColor = new THREE.Color(), badColor = new THREE.Color();
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0xb3aaa0, 2.1));
+// ceiling lights, on whenever the ceiling is shown
+const roomLights = new THREE.Group();
+for (const [x, z] of [[1.5, -6.6], [4.3, -8.4], [4.2, -1.6], [1.3, -3.6], [4.2, -3.8], [4.2, -6.2]]) {
+  const l = new THREE.PointLight(0xfff0dc, 2.2, 0, 2);
+  l.position.set(x, 2.1, z);
+  roomLights.add(l);
+}
+roomLights.visible = false;
+scene.add(roomLights);
+const sun = new THREE.DirectionalLight(0xfff4e6, 1.9);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.bias = -0.0004;
+Object.assign(sun.shadow.camera, { left: -8, right: 8, top: 8, bottom: -8, near: 1, far: 50 });
+scene.add(sun, sun.target);
+
+const persp = new THREE.PerspectiveCamera(45, 1, 0.05, 200);
+const ortho = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 100);
+let mode = "3d";
+let cam = persp;
+
+const furnRoot = new THREE.Group();
+scene.add(furnRoot);
+const helpers = new THREE.Group();
+scene.add(helpers);
+
+let META = null, OBST = [], B = [0, 5.53, 0, 9.65], center = new THREE.Vector3(2.77, 0, -4.82);
+let flatMaterials = [], ceilingObj = null;
+const roomLabels = [];
+const cutPlane = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1.2);
+
+// ------------------------------------------------------------------ state
+const state = {
+  layouts: new Map(),   // id -> {name, items}
+  currentId: null,
+  items: [],            // working copy of current layout's items
+  selected: null,
+  snap: true,
+  dragging: false,
+};
+const meshes = new Map(); // item id -> group
+
+// ------------------------------------------------------------------ pointer (registered before OrbitControls so it can claim drags)
+const ray = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+let drag = null, downAt = null;
+
+function setNdc(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, cam);
+}
+function pickItem(e) {
+  setNdc(e);
+  const hits = ray.intersectObjects(furnRoot.children, true);
+  for (const h of hits) {
+    let o = h.object;
+    while (o && !o.userData.itemId) o = o.parent;
+    if (o) return o.userData.itemId;
+  }
+  return null;
+}
+function floorPoint() {
+  const p = new THREE.Vector3();
+  return ray.ray.intersectPlane(floorPlane, p) ? p : null;
+}
+renderer.domElement.addEventListener("pointerdown", (e) => {
+  if (mode === "walk") return walkDown(e);
+  if (e.button !== 0) return;
+  const id = pickItem(e);
+  if (id) {
+    e.stopImmediatePropagation();
+    select(id);
+    const it = itemById(id), p = floorPoint();
+    if (!p) return;
+    drag = { id, dx: it.x - p.x, dz: it.z - p.z, moved: false };
+    state.dragging = true;
+    renderer.domElement.setPointerCapture(e.pointerId);
+    renderer.domElement.style.cursor = "grabbing";
+  } else {
+    downAt = { x: e.clientX, y: e.clientY };
+  }
+});
+renderer.domElement.addEventListener("pointermove", (e) => {
+  if (mode === "walk") return walkMove(e);
+  if (drag) {
+    setNdc(e);
+    const p = floorPoint();
+    if (!p) return;
+    const it = itemById(drag.id);
+    let x = p.x + drag.dx, z = p.z + drag.dz;
+    if (state.snap) { x = Math.round(x / 0.05) * 0.05; z = Math.round(z / 0.05) * 0.05; }
+    it.x = clamp(x, B[0] - 1.5, B[1] + 1.5);
+    it.z = clamp(z, -B[3] - 1.5, -B[2] + 1.5);
+    drag.moved = true;
+    placeItem(it);
+    updateSelectionUI();
+    return;
+  }
+  if (e.pointerType === "mouse") renderer.domElement.style.cursor = pickItem(e) ? "grab" : "";
+});
+function endDrag(e) {
+  if (drag) {
+    if (drag.moved) changed();
+    drag = null;
+    state.dragging = false;
+    renderer.domElement.style.cursor = "";
+  } else if (downAt && e && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 4) {
+    select(null);
+  }
+  downAt = null;
+}
+renderer.domElement.addEventListener("pointerup", (e) => (mode === "walk" ? walkUp(e) : endDrag(e)));
+renderer.domElement.addEventListener("pointercancel", (e) => (mode === "walk" ? walkUp(e) : endDrag(null)));
+
+const controls3d = new OrbitControls(persp, renderer.domElement);
+controls3d.enableDamping = true;
+controls3d.maxPolarAngle = Math.PI / 2 - 0.03;
+controls3d.minDistance = 0.3;
+controls3d.maxDistance = 40;
+const controlsTop = new OrbitControls(ortho, renderer.domElement);
+controlsTop.enableRotate = false;
+controlsTop.screenSpacePanning = true;
+controlsTop.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+controlsTop.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
+controlsTop.minZoom = 0.5;
+controlsTop.maxZoom = 8;
+controlsTop.enabled = false;
+const controls = () => (mode === "3d" ? controls3d : controlsTop);
+
+// ------------------------------------------------------------------ cameras & views
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h);
+  labelRenderer.setSize(w, h);
+  persp.aspect = w / h;
+  persp.updateProjectionMatrix();
+  const aspect = w / h;
+  const halfH = Math.max((B[3] - B[2]) / 2 + 0.9, ((B[1] - B[0]) / 2 + 0.9) / aspect);
+  Object.assign(ortho, { left: -halfH * aspect, right: halfH * aspect, top: halfH, bottom: -halfH });
+  ortho.updateProjectionMatrix();
+  sizeMinimap(w, h);
+}
+new ResizeObserver(resize).observe(stage);
+
+const VIEWS = {
+  overview: { pos: [5.5, 10.5, 4.2], target: [0, 0, 0], rel: true, ceiling: false },
+  reception: { pos: [1.3, 1.6, -4.95], target: [2.0, 1.25, -8.5] },
+  dining: { pos: [1.2, 1.6, -8.6], target: [4.6, 1.1, -7.2] },
+  bedroom: { pos: [2.45, 1.6, -2.75], target: [4.5, 1.0, -0.8] },
+  bathroom: { pos: [2.55, 1.6, -4.13], target: [5.3, 1.1, -3.8] },
+  corridor: { pos: [1.35, 1.6, -2.3], target: [1.3, 1.3, -6.0] },
+};
+function goTo(name) {
+  const v = VIEWS[name];
+  if (mode !== "3d") setMode("3d");
+  const off = v.rel ? center : new THREE.Vector3();
+  persp.position.set(v.pos[0] + off.x, v.pos[1], v.pos[2] + off.z);
+  controls3d.target.set(v.target[0] + off.x, v.target[1], v.target[2] + off.z);
+  controls3d.update();
+  const eye = name !== "overview";
+  setToggle("tCeil", eye);
+  if (eye) setToggle("tCut", false);
+  applyDisplay();
+}
+function setMode(m) {
+  if (m === "walk") return enterWalk();
+  if (mode === "walk") leaveWalk();
+  mode = m;
+  cam = m === "3d" ? persp : ortho;
+  controls3d.enabled = m === "3d";
+  controlsTop.enabled = m === "top";
+  $("v3d").setAttribute("aria-pressed", m === "3d");
+  $("vTop").setAttribute("aria-pressed", m === "top");
+  $("vWalk").setAttribute("aria-pressed", "false");
+  if (m === "top") { setToggle("tCeil", false); setToggle("tCut", false); $("goto").value = "overview"; }
+  applyDisplay();
+}
+$("v3d").onclick = () => setMode("3d");
+$("vTop").onclick = () => setMode("top");
+$("vWalk").onclick = () => setMode("walk");
+$("goto").onchange = (e) => goTo(e.target.value);
+
+function setToggle(id, on) { $(id).setAttribute("aria-pressed", on ? "true" : "false"); }
+const isOn = (id) => $(id).getAttribute("aria-pressed") === "true";
+for (const id of ["tCut", "tCeil", "tLabels", "tSnap"]) {
+  $(id).onclick = () => {
+    setToggle(id, !isOn(id));
+    if (id === "tCut" && isOn("tCut")) setToggle("tCeil", false);
+    if (id === "tCeil" && isOn("tCeil")) setToggle("tCut", false);
+    applyDisplay();
+  };
+}
+function applyDisplay() {
+  state.snap = isOn("tSnap");
+  if (ceilingObj) ceilingObj.visible = (isOn("tCeil") && mode === "3d") || mode === "walk";
+  roomLights.visible = !!ceilingObj?.visible;
+  const cut = isOn("tCut") && mode === "3d";
+  for (const m of flatMaterials) {
+    m.clippingPlanes = cut ? [cutPlane] : null;
+    m.side = cut || m.userData.doubleSide ? THREE.DoubleSide : THREE.FrontSide;
+    m.needsUpdate = true;
+  }
+  for (const l of roomLabels) l.visible = isOn("tLabels") && mode !== "walk";
+}
+
+// ------------------------------------------------------------------ load the flat
+const loader = new GLTFLoader();
+Promise.all([
+  fetch("flat_meta.json").then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); }),
+  // the model ships as base64 text (artifacts don't serve .glb)
+  fetch("flat_glb.txt").then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); }).then((b64) => {
+    const bin = atob(b64.replace(/\s+/g, ""));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return loader.parseAsync(bytes.buffer, "");
+  }),
+]).then(([meta, gltf]) => {
+  META = meta;
+  B = meta.bounds;
+  center.set((B[0] + B[1]) / 2, 0, -(B[2] + B[3]) / 2);
+  // obstacles: [x0,x1,y0,y1,z0,z1] in plan metres -> rect in scene coords
+  OBST = meta.obstacles.map(([x0, x1, y0, y1, z0, z1]) => ({ x0, x1, z0: -y1, z1: -y0, y0: z0, y1: z1 }));
+  const flat = gltf.scene;
+  flat.traverse((o) => {
+    if (!o.isMesh) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    o.castShadow = !mats.some((m) => m.transparent);
+    o.receiveShadow = true;
+    for (const m of mats) {
+      if (m.transparent) { m.depthWrite = false; m.userData.doubleSide = true; }
+      if (m.metalness > 0.5) { m.metalness = 0.25; m.roughness = 0.3; } // no env map: keep steel from going black
+      if (!flatMaterials.includes(m)) flatMaterials.push(m);
+    }
+  });
+  ceilingObj = flat.getObjectByName("Ceiling");
+  if (ceilingObj) ceilingObj.traverse((o) => { o.castShadow = false; });
+  scene.add(flat);
+  for (const l of meta.labels) {
+    const [title, sub] = l.text.split("\n");
+    const div = document.createElement("div");
+    div.className = "room-label";
+    div.textContent = title;
+    if (sub) { const s = document.createElement("small"); s.textContent = "\n" + sub; div.appendChild(s); }
+    const obj = new CSS2DObject(div);
+    obj.position.set(l.x, 0.05, -l.y);
+    roomLabels.push(obj);
+    scene.add(obj);
+  }
+  sun.position.set(center.x - 6, 14, center.z + 5);
+  sun.target.position.copy(center);
+  ortho.position.set(center.x, 30, center.z + 0.001);
+  controlsTop.target.copy(center);
+  controlsTop.update();
+  resize();
+  goTo("overview");
+  $("loading").hidden = true;
+  rebuildAll();
+}).catch((err) => {
+  $("loading").textContent = "The 3D model didn't load. Reload the page to try again.";
+  console.error(err);
+});
+
+// ------------------------------------------------------------------ furniture geometry
+function makeMats(it) {
+  const main = new THREE.MeshStandardMaterial({ color: it.color || DEFAULT_COLOR[it.type] || "#999", roughness: 0.8 });
+  return {
+    main,
+    wood: new THREE.MeshStandardMaterial({ color: "#a97c52", roughness: 0.6 }),
+    white: new THREE.MeshStandardMaterial({ color: "#efefed", roughness: 0.6 }),
+    linen: new THREE.MeshStandardMaterial({ color: "#f1ede6", roughness: 0.9 }),
+    dark: new THREE.MeshStandardMaterial({ color: "#26292c", roughness: 0.5 }),
+    green: new THREE.MeshStandardMaterial({ color: "#4f7a4a", roughness: 0.9 }),
+  };
+}
+const unitBox = new THREE.BoxGeometry(1, 1, 1);
+function box(g, x0, x1, y0, y1, z0, z1, mat) {
+  if (x1 - x0 <= 0 || y1 - y0 <= 0 || z1 - z0 <= 0) return;
+  const m = new THREE.Mesh(unitBox, mat);
+  m.scale.set(x1 - x0, y1 - y0, z1 - z0);
+  m.position.set((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+  m.castShadow = m.receiveShadow = true;
+  g.add(m);
+}
+function cyl(g, r0, r1, y0, y1, mat, seg = 20) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(r1, r0, y1 - y0, seg), mat);
+  m.position.y = (y0 + y1) / 2;
+  m.castShadow = m.receiveShadow = true;
+  g.add(m);
+}
+function legs(g, w, d, h, inset, s, mat) {
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const cx = sx * (w / 2 - inset), cz = sz * (d / 2 - inset);
+    box(g, cx - s, cx + s, 0, h, cz - s, cz + s, mat);
+  }
+}
+// local frame: x = width, y = up, z = depth; front faces +z
+const BUILD = {
+  bed(g, w, d, h, M) {
+    legs(g, w, d, 0.1, 0.05, 0.03, M.wood);
+    box(g, -w / 2, w / 2, 0.1, 0.32, -d / 2, d / 2, M.wood);
+    box(g, -w / 2 + 0.02, w / 2 - 0.02, 0.32, 0.52, -d / 2 + 0.06, d / 2 - 0.02, M.linen);
+    box(g, -w / 2, w / 2, 0, h, -d / 2, -d / 2 + 0.06, M.wood);
+    const pw = Math.min(0.7, (w - 0.12) / (w > 1.2 ? 2 : 1));
+    const n = w > 1.2 ? 2 : 1;
+    for (let i = 0; i < n; i++) {
+      const cx = n === 1 ? 0 : (i ? 1 : -1) * (pw / 2 + 0.03);
+      box(g, cx - pw / 2, cx + pw / 2, 0.52, 0.63, -d / 2 + 0.1, -d / 2 + 0.48, M.white);
+    }
+    box(g, -w / 2 + 0.005, w / 2 - 0.005, 0.5, 0.57, -d / 2 + 0.6, d / 2 - 0.005, M.main);
+  },
+  sofa(g, w, d, h, M) {
+    const arm = Math.min(0.16, w * 0.15);
+    box(g, -w / 2 + 0.03, w / 2 - 0.03, 0, 0.08, -d / 2 + 0.03, d / 2 - 0.03, M.dark);
+    box(g, -w / 2, w / 2, 0.08, 0.42, -d / 2, d / 2, M.main);
+    box(g, -w / 2 + arm, w / 2 - arm, 0.42, 0.5, -d / 2 + 0.2, d / 2 - 0.02, M.main);
+    box(g, -w / 2, w / 2, 0.42, h, -d / 2, -d / 2 + 0.2, M.main);
+    box(g, -w / 2, -w / 2 + arm, 0.42, 0.62, -d / 2, d / 2, M.main);
+    box(g, w / 2 - arm, w / 2, 0.42, 0.62, -d / 2, d / 2, M.main);
+  },
+  table(g, w, d, h, M) {
+    box(g, -w / 2, w / 2, h - 0.035, h, -d / 2, d / 2, M.main);
+    legs(g, w, d, h - 0.035, 0.06, 0.025, M.main);
+  },
+  desk(g, w, d, h, M) { BUILD.table(g, w, d, h, M); },
+  chair(g, w, d, h, M) {
+    const sw = w / 2 - 0.01, sd = d / 2 - 0.01;
+    box(g, -sw, sw, 0.43, 0.47, -sd, sd, M.main);
+    legs(g, w - 0.02, d - 0.02, 0.43, 0.03, 0.018, M.main);
+    box(g, -sw, sw, 0.47, h, -sd, -sd + 0.04, M.main);
+  },
+  deskchair(g, w, d, h, M) {
+    cyl(g, w / 2, w / 2, 0, 0.05, M.dark, 5);
+    box(g, -0.025, 0.025, 0.05, 0.45, -0.025, 0.025, M.dark);
+    box(g, -0.24, 0.24, 0.45, 0.52, -0.22, 0.24, M.main);
+    box(g, -0.22, 0.22, 0.55, h, -0.26, -0.2, M.main);
+  },
+  tv(g, w, d, h, M) {
+    box(g, -w / 2, w / 2, 0.02, h, -d / 2, d / 2, M.main);
+    box(g, -0.005, 0.005, 0.06, h - 0.04, d / 2, d / 2 + 0.003, M.dark);
+    const tw = Math.min(1.23, w - 0.1);
+    box(g, -0.15, 0.15, h, h + 0.06, -0.1, 0.1, M.dark);
+    box(g, -tw / 2, tw / 2, h + 0.06, h + 0.06 + tw * 0.57, -0.03, 0.03, M.dark);
+  },
+  shelf(g, w, d, h, M) {
+    const t = 0.02;
+    box(g, -w / 2, w / 2, 0, h, -d / 2, -d / 2 + t, M.main);
+    box(g, -w / 2, -w / 2 + t, 0, h, -d / 2, d / 2, M.main);
+    box(g, w / 2 - t, w / 2, 0, h, -d / 2, d / 2, M.main);
+    const n = Math.max(2, Math.round(h / 0.36));
+    for (let i = 0; i <= n; i++) {
+      const y = (i * (h - t)) / n;
+      box(g, -w / 2, w / 2, y, y + t, -d / 2, d / 2, M.main);
+    }
+  },
+  cabinet(g, w, d, h, M) {
+    box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main);
+    box(g, -w / 2 + 0.03, w / 2 - 0.03, h - 0.17, h - 0.165, d / 2, d / 2 + 0.003, M.dark);
+  },
+  drawers(g, w, d, h, M) {
+    box(g, -w / 2, w / 2, 0.04, h, -d / 2, d / 2, M.main);
+    for (let i = 1; i < 3; i++) {
+      const y = 0.04 + ((h - 0.04) * i) / 3;
+      box(g, -w / 2 + 0.03, w / 2 - 0.03, y - 0.003, y + 0.003, d / 2, d / 2 + 0.003, M.dark);
+    }
+  },
+  wardrobe(g, w, d, h, M) {
+    box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main);
+    box(g, -0.003, 0.003, 0.05, h - 0.05, d / 2, d / 2 + 0.003, M.dark);
+    box(g, -0.05, -0.03, h / 2 - 0.15, h / 2 + 0.15, d / 2, d / 2 + 0.02, M.dark);
+    box(g, 0.03, 0.05, h / 2 - 0.15, h / 2 + 0.15, d / 2, d / 2 + 0.02, M.dark);
+  },
+  rug(g, w, d, h, M) { box(g, -w / 2, w / 2, 0, 0.012, -d / 2, d / 2, M.main); },
+  plant(g, w, d, h, M) {
+    const r = Math.min(w, d) / 2;
+    cyl(g, r * 0.6, r * 0.75, 0, Math.min(0.35, h * 0.3), M.white);
+    const s = new THREE.Mesh(new THREE.SphereGeometry(r, 16, 12), M.main);
+    s.scale.y = Math.max(1, (h - h * 0.3) / (2 * r));
+    s.position.y = h * 0.3 + r * s.scale.y * 0.95;
+    s.castShadow = true;
+    g.add(s);
+  },
+  box(g, w, d, h, M) { box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main); },
+};
+
+function buildItem(it) {
+  const old = meshes.get(it.id);
+  if (old) { furnRoot.remove(old); disposeGroup(old); }
+  const g = new THREE.Group();
+  g.userData.itemId = it.id;
+  const M = makeMats(it);
+  g.userData.mats = Object.values(M);
+  (BUILD[it.type] || BUILD.box)(g, it.w / 100, it.d / 100, it.h / 100, M);
+  // footprint outline (shown when selected / colliding)
+  const hw = it.w / 200, hd = it.d / 200;
+  const pts = [[-hw, -hd], [hw, -hd], [hw, hd], [-hw, hd], [-hw, -hd]].map(([x, z]) => new THREE.Vector3(x, 0.015, z));
+  const outline = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: selColor, depthTest: false }));
+  outline.renderOrder = 10;
+  outline.visible = false;
+  g.add(outline);
+  g.userData.outline = outline;
+  furnRoot.add(g);
+  meshes.set(it.id, g);
+  placeItem(it, true);
+}
+function disposeGroup(g) {
+  g.traverse((o) => { if (o.geometry && o.geometry !== unitBox) o.geometry.dispose(); });
+  for (const m of g.userData.mats || []) m.dispose();
+}
+function placeItem(it, skipCollide) {
+  const g = meshes.get(it.id);
+  if (!g) return;
+  g.position.set(it.x, 0, it.z);
+  g.rotation.y = it.rot * DEG;
+  if (!skipCollide) refreshHighlights();
+}
+function rebuildAll() {
+  for (const g of meshes.values()) { furnRoot.remove(g); disposeGroup(g); }
+  meshes.clear();
+  if (!META) return;
+  for (const it of state.items) buildItem(it);
+  refreshHighlights();
+  updateSelectionUI();
+}
+
+// ------------------------------------------------------------------ collisions & clearances
+function rectOf(it) {
+  const a = it.rot * DEG;
+  return { cx: it.x, cz: it.z, hw: it.w / 200, hd: it.d / 200, c: Math.cos(a), s: Math.sin(a) };
+}
+function corners(r) {
+  const out = [];
+  for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+    const lx = sx * r.hw, lz = sz * r.hd;
+    out.push([r.cx + lx * r.c + lz * r.s, r.cz - lx * r.s + lz * r.c]);
+  }
+  return out;
+}
+function aabbRect(o) {
+  return { cx: (o.x0 + o.x1) / 2, cz: (o.z0 + o.z1) / 2, hw: (o.x1 - o.x0) / 2, hd: (o.z1 - o.z0) / 2, c: 1, s: 0 };
+}
+function overlap(a, b) {
+  const ca = corners(a), cb = corners(b);
+  const axes = [[a.c, -a.s], [a.s, a.c], [b.c, -b.s], [b.s, b.c]];
+  for (const [ax, az] of axes) {
+    let mina = Infinity, maxa = -Infinity, minb = Infinity, maxb = -Infinity;
+    for (const [x, z] of ca) { const p = x * ax + z * az; mina = Math.min(mina, p); maxa = Math.max(maxa, p); }
+    for (const [x, z] of cb) { const p = x * ax + z * az; minb = Math.min(minb, p); maxb = Math.max(maxb, p); }
+    if (maxa <= minb + EPS || maxb <= mina + EPS) return false;
+  }
+  return true;
+}
+const SEATS = new Set(["chair", "deskchair"]), TABLES = new Set(["table", "desk"]);
+const tucks = (a, b) => SEATS.has(a.type) && TABLES.has(b.type); // chairs may slide under tables
+
+function collides(it) {
+  if (it.type === "rug") return false;
+  const r = rectOf(it), h = it.h / 100;
+  for (const o of OBST) {
+    if (o.y0 < h - 0.01 && o.y1 > 0.01 && overlap(r, aabbRect(o))) return true;
+  }
+  for (const other of state.items) {
+    if (other === it || other.type === "rug" || tucks(it, other) || tucks(other, it)) continue;
+    if (overlap(r, rectOf(other))) return true;
+  }
+  return false;
+}
+function refreshHighlights() {
+  for (const it of state.items) {
+    const g = meshes.get(it.id);
+    if (!g) continue;
+    const bad = collides(it);
+    it._bad = bad;
+    const sel = state.selected === it.id;
+    const col = bad ? badColor : selColor;
+    for (const m of g.userData.mats) m.emissive?.copy(col).multiplyScalar(bad ? 0.35 : sel ? 0.22 : 0);
+    g.userData.outline.visible = sel || bad;
+    g.userData.outline.material.color.copy(col);
+  }
+  updateGaps();
+  const it = itemById(state.selected);
+  if (it) {
+    const pill = $("iFit");
+    pill.textContent = it.type === "rug" ? "Rug: sits under furniture" : it._bad ? "Overlaps a wall, fixture or item" : "Fits";
+    pill.className = "pill " + (it._bad ? "bad" : "ok");
+  }
+}
+
+const gapLines = [], gapLabels = [];
+for (let i = 0; i < 4; i++) {
+  const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]),
+    new THREE.LineDashedMaterial({ color: 0x2a63d4, dashSize: 0.06, gapSize: 0.04, depthTest: false }));
+  line.renderOrder = 11;
+  line.visible = false;
+  helpers.add(line);
+  gapLines.push(line);
+  const div = document.createElement("div");
+  div.className = "gap-label";
+  const lab = new CSS2DObject(div);
+  lab.visible = false;
+  helpers.add(lab);
+  gapLabels.push(lab);
+}
+function updateGaps() {
+  const it = itemById(state.selected);
+  gapLines.forEach((l) => (l.visible = false));
+  gapLabels.forEach((l) => (l.visible = false));
+  if (!it || !META) return;
+  const cs = corners(rectOf(it));
+  const minX = Math.min(...cs.map((c) => c[0])), maxX = Math.max(...cs.map((c) => c[0]));
+  const minZ = Math.min(...cs.map((c) => c[1])), maxZ = Math.max(...cs.map((c) => c[1]));
+  const h = Math.max(it.h / 100, 0.9);
+  const boxes = OBST.filter((o) => o.y0 < Math.min(h, 1.2) && o.y1 > 0.01).map((o) => [o.x0, o.x1, o.z0, o.z1]);
+  for (const other of state.items) {
+    if (other === it || other.type === "rug" || it.type === "rug") continue;
+    const oc = corners(rectOf(other));
+    boxes.push([Math.min(...oc.map((c) => c[0])), Math.max(...oc.map((c) => c[0])), Math.min(...oc.map((c) => c[1])), Math.max(...oc.map((c) => c[1]))]);
+  }
+  const cx = (minX + maxX) / 2, cz = (minZ + maxZ) / 2;
+  const dirs = [
+    { d: [1, 0], from: maxX, test: (b) => b[0] >= maxX - 0.002 && b[2] < maxZ - EPS && b[3] > minZ + EPS, dist: (b) => b[0] - maxX },
+    { d: [-1, 0], from: minX, test: (b) => b[1] <= minX + 0.002 && b[2] < maxZ - EPS && b[3] > minZ + EPS, dist: (b) => minX - b[1] },
+    { d: [0, 1], from: maxZ, test: (b) => b[2] >= maxZ - 0.002 && b[0] < maxX - EPS && b[1] > minX + EPS, dist: (b) => b[2] - maxZ },
+    { d: [0, -1], from: minZ, test: (b) => b[3] <= minZ + 0.002 && b[0] < maxX - EPS && b[1] > minX + EPS, dist: (b) => minZ - b[3] },
+  ];
+  dirs.forEach((dir, i) => {
+    let best = Infinity;
+    for (const b of boxes) if (dir.test(b)) best = Math.min(best, dir.dist(b));
+    if (!(best > 0.01 && best < 4)) return;
+    const sx = dir.d[0] ? dir.from : cx, sz = dir.d[1] ? dir.from : cz;
+    const a = new THREE.Vector3(sx, 0.03, sz), b = new THREE.Vector3(sx + dir.d[0] * best, 0.03, sz + dir.d[1] * best);
+    gapLines[i].geometry.setFromPoints([a, b]);
+    gapLines[i].computeLineDistances();
+    gapLines[i].material.color.copy(selColor);
+    gapLines[i].visible = true;
+    gapLabels[i].element.textContent = Math.round(best * 100) + " cm";
+    gapLabels[i].position.copy(a).add(b).multiplyScalar(0.5);
+    gapLabels[i].visible = true;
+  });
+}
+
+// ------------------------------------------------------------------ selection & inspector
+const itemById = (id) => state.items.find((i) => i.id === id);
+function select(id) {
+  state.selected = id;
+  refreshHighlights();
+  updateSelectionUI();
+}
+function updateSelectionUI() {
+  const it = itemById(state.selected);
+  $("inspector").hidden = !it;
+  $("hint").hidden = !!it;
+  if (!it) return;
+  const set = (el, v) => { if (document.activeElement !== el) el.value = v; };
+  set($("iName"), it.name);
+  set($("iW"), Math.round(it.w));
+  set($("iD"), Math.round(it.d));
+  set($("iH"), Math.round(it.h));
+  set($("iR"), Math.round(((it.rot % 360) + 360) % 360));
+  const col = it.color || DEFAULT_COLOR[it.type];
+  for (const b of $("swatches").children) b.setAttribute("aria-pressed", b.dataset.c === col);
+}
+for (const c of SWATCHES) {
+  const b = document.createElement("button");
+  b.className = "sw";
+  b.dataset.c = c;
+  b.style.background = c;
+  b.title = "Colour";
+  b.setAttribute("aria-label", "Colour " + c);
+  b.onclick = () => { const it = itemById(state.selected); if (!it) return; it.color = c; buildItem(it); refreshHighlights(); updateSelectionUI(); changed(); };
+  $("swatches").appendChild(b);
+}
+function editNum(id, key, min, max) {
+  $(id).addEventListener("change", (e) => {
+    const it = itemById(state.selected);
+    const v = parseFloat(e.target.value);
+    if (!it || !isFinite(v)) return updateSelectionUI();
+    it[key] = clamp(v, min, max);
+    if (key === "rot") placeItem(it); else buildItem(it);
+    refreshHighlights();
+    updateSelectionUI();
+    changed();
+  });
+}
+editNum("iW", "w", 5, 600);
+editNum("iD", "d", 5, 600);
+editNum("iH", "h", 1, 226);
+editNum("iR", "rot", -720, 720);
+$("iName").addEventListener("input", (e) => { const it = itemById(state.selected); if (it) { it.name = e.target.value; changed(); } });
+function rotate(by) {
+  const it = itemById(state.selected);
+  if (!it) return;
+  it.rot = (((it.rot + by) % 360) + 360) % 360;
+  placeItem(it);
+  updateSelectionUI();
+  changed();
+}
+$("rotL").onclick = () => rotate(15);
+$("rotR").onclick = () => rotate(-15);
+$("rot90").onclick = () => rotate(90);
+$("closeItem").onclick = () => select(null);
+$("dupItem").onclick = () => {
+  const it = itemById(state.selected);
+  if (!it) return;
+  const copy = { ...stripRuntime(it), id: newId(), x: it.x + 0.3, z: it.z + 0.3 };
+  state.items.push(copy);
+  buildItem(copy);
+  select(copy.id);
+  changed();
+};
+let undoTimer = null, lastRemoved = null;
+function removeSelected() {
+  const it = itemById(state.selected);
+  if (!it) return;
+  state.items = state.items.filter((i) => i !== it);
+  const g = meshes.get(it.id);
+  if (g) { furnRoot.remove(g); disposeGroup(g); meshes.delete(it.id); }
+  lastRemoved = stripRuntime(it);
+  select(null);
+  changed();
+  $("toastText").textContent = "Removed " + (it.name || "item");
+  $("toast").hidden = false;
+  clearTimeout(undoTimer);
+  undoTimer = setTimeout(() => ($("toast").hidden = true), 6000);
+}
+$("delItem").onclick = removeSelected;
+$("toastUndo").onclick = () => {
+  if (!lastRemoved) return;
+  state.items.push(lastRemoved);
+  buildItem(lastRemoved);
+  select(lastRemoved.id);
+  lastRemoved = null;
+  $("toast").hidden = true;
+  changed();
+};
+window.addEventListener("keyup", (e) => walk.keys.delete(e.code));
+window.addEventListener("blur", () => walk.keys.clear());
+window.addEventListener("keydown", (e) => {
+  if (e.target?.closest?.("input, select, textarea")) return;
+  if (mode === "walk") {
+    walk.keys.add(e.code);
+    if (e.code === "Space" && walk.y === 0) walk.vy = 2.6;
+    if (e.code.startsWith("Arrow") || e.code === "Space") e.preventDefault();
+    return;
+  }
+  if (!state.selected) return;
+  if (e.key === "r" || e.key === "R") { rotate(e.shiftKey ? -90 : 90); e.preventDefault(); }
+  else if (e.key === "Delete" || e.key === "Backspace") { removeSelected(); e.preventDefault(); }
+  else if (e.key === "Escape") select(null);
+  else if (e.key.startsWith("Arrow")) {
+    const it = itemById(state.selected), s = e.shiftKey ? 0.1 : 0.01;
+    // arrows move on screen axes in plan view (north = up)
+    if (e.key === "ArrowLeft") it.x -= s;
+    if (e.key === "ArrowRight") it.x += s;
+    if (e.key === "ArrowUp") it.z -= s;
+    if (e.key === "ArrowDown") it.z += s;
+    placeItem(it);
+    updateSelectionUI();
+    changed();
+    e.preventDefault();
+  }
+});
+
+// ------------------------------------------------------------------ catalogue UI
+function addItem(tpl) {
+  if (!state.currentId) createLayout("My layout", []);
+  const t = mode === "walk"
+    ? { x: walk.pos.x - Math.sin(walk.yaw) * 1.3, z: walk.pos.z - Math.cos(walk.yaw) * 1.3 }
+    : controls().target;
+  const it = { id: newId(), type: tpl.type, name: tpl.name, w: tpl.w, d: tpl.d, h: tpl.h, x: clamp(t.x, B[0] + 0.5, B[1] - 0.5), z: clamp(t.z, -B[3] + 0.5, -B[2] - 0.5), rot: 0 };
+  state.items.push(it);
+  buildItem(it);
+  if (mode !== "walk") select(it.id); else refreshHighlights();
+  changed();
+}
+for (const [group, list] of CATALOG) {
+  const wrap = document.createElement("div");
+  wrap.className = "cat-group";
+  const h = document.createElement("h3");
+  h.textContent = group;
+  wrap.appendChild(h);
+  for (const tpl of list) {
+    const b = document.createElement("button");
+    b.className = "cat-item";
+    const n = document.createElement("span");
+    n.textContent = tpl.name;
+    const d = document.createElement("span");
+    d.className = "dims";
+    d.textContent = `${tpl.w} × ${tpl.d}`;
+    b.append(n, d);
+    b.onclick = () => addItem(tpl);
+    wrap.appendChild(b);
+  }
+  $("catalog").appendChild(wrap);
+}
+$("customForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const w = clamp(+$("cW").value || 100, 5, 600), d = clamp(+$("cD").value || 50, 5, 600), h = clamp(+$("cH").value || 50, 1, 226);
+  addItem({ type: "box", name: $("cName").value.trim() || "Custom piece", w, d, h });
+});
+
+// ------------------------------------------------------------------ layouts & saving
+const newId = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const stripRuntime = (it) => { const { _bad, ...rest } = it; return rest; };
+const cleanItems = () => state.items.map(stripRuntime);
+const LS_LAST = "fourth-floor-planner:last-layout";
+const LS_LOCAL = "fourth-floor-planner:layouts";
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch {} };
+
+let store = null;          // {kind, save(id, body), remove(id)}
+let dirty = false, writing = false, saveTimer = null, readOnly = false;
+
+function setStatus(text, warn) {
+  $("status").textContent = text;
+  $("status").classList.toggle("warn", !!warn);
+}
+function renderLayoutList() {
+  const sel = $("layoutSelect");
+  sel.textContent = "";
+  const entries = [...state.layouts.entries()].sort((a, b) => a[1].name.localeCompare(b[1].name));
+  for (const [id, l] of entries) {
+    const o = document.createElement("option");
+    o.value = id;
+    o.textContent = l.name || "Untitled";
+    sel.appendChild(o);
+  }
+  sel.value = state.currentId || "";
+  const none = state.layouts.size === 0;
+  $("layoutEmpty").hidden = !none || !store;
+  $("layoutControls").hidden = none;
+  if (document.activeElement !== $("layoutName")) $("layoutName").value = state.layouts.get(state.currentId)?.name || "";
+  $("deleteLayout").disabled = readOnly;
+}
+function openLayout(id) {
+  state.currentId = id;
+  lsSet(LS_LAST, id);
+  const l = state.layouts.get(id);
+  state.items = (l?.items || []).map((i) => ({ ...i }));
+  if (!state.items.some((i) => i.id === state.selected)) state.selected = null;
+  rebuildAll();
+  renderLayoutList();
+}
+function createLayout(name, items) {
+  const id = newId();
+  state.layouts.set(id, { name, items: items.map((i) => ({ ...i, id: i.id || newId() })) });
+  openLayout(id);
+  changed();
+  return id;
+}
+$("layoutSelect").onchange = (e) => { flushNow(); openLayout(e.target.value); };
+$("layoutName").addEventListener("input", (e) => {
+  const l = state.layouts.get(state.currentId);
+  if (!l) return;
+  l.name = e.target.value;
+  changed();
+});
+$("layoutName").addEventListener("change", renderLayoutList);
+$("newLayout").onclick = () => { flushNow(); createLayout(`Layout ${state.layouts.size + 1}`, []); };
+$("copyLayout").onclick = () => { flushNow(); const l = state.layouts.get(state.currentId); createLayout((l?.name || "Layout") + " (copy)", cleanItems().map((i) => ({ ...i, id: newId() }))); };
+$("exampleLayout").onclick = () => { flushNow(); createLayout("Example layout", EXAMPLE); };
+$("startExample").onclick = () => createLayout("Example layout", EXAMPLE);
+$("startEmpty").onclick = () => createLayout("My layout", []);
+let armed = null;
+$("deleteLayout").onclick = async () => {
+  const btn = $("deleteLayout");
+  if (!btn.classList.contains("armed")) {
+    btn.classList.add("armed");
+    btn.textContent = "Confirm delete";
+    clearTimeout(armed);
+    armed = setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Delete"; }, 4000);
+    return;
+  }
+  btn.classList.remove("armed");
+  btn.textContent = "Delete";
+  const id = state.currentId;
+  if (!id) return;
+  clearTimeout(saveTimer);
+  dirty = false;
+  state.layouts.delete(id);
+  try { await store?.remove(id); } catch (e) { setStatus("Couldn't delete the layout. Try again.", true); }
+  const next = [...state.layouts.keys()][0];
+  if (next) openLayout(next); else { state.currentId = null; state.items = []; rebuildAll(); renderLayoutList(); }
+};
+
+function changed() {
+  const l = state.layouts.get(state.currentId);
+  if (l) l.items = cleanItems();
+  if (readOnly || !store) return;
+  dirty = true;
+  setStatus("Saving…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(flush, 700);
+}
+function flushNow() { if (dirty) { clearTimeout(saveTimer); flush(); } }
+async function flush() {
+  if (writing) { saveTimer = setTimeout(flush, 300); return; }
+  const id = state.currentId, l = state.layouts.get(id);
+  if (!id || !l || !dirty) return;
+  dirty = false;
+  writing = true;
+  try {
+    await store.save(id, { name: l.name || "Untitled", items: l.items, updatedAt: Date.now() });
+    if (!dirty) setStatus(store.kind === "db" ? "Saved" : "Saved in this browser");
+  } catch (e) {
+    if (e?.code === "invalid_argument") { readOnly = true; setStatus("View only: changes aren't saved", true); }
+    else if (e?.code === "quota_exceeded") setStatus("Storage is full. Delete a layout to save again.", true);
+    else { dirty = true; setStatus("Not saved yet. Retrying…", true); saveTimer = setTimeout(flush, 3000); }
+  } finally {
+    writing = false;
+    renderLayoutList();
+  }
+}
+
+const canon = (items) => JSON.stringify((items || []).map((i) => Object.keys(i).sort().map((k) => [k, i[k]])));
+function sameItems(a, b) { return canon(a) === canon(b); }
+function pickInitial() {
+  const last = lsGet(LS_LAST);
+  if (last && state.layouts.has(last)) return last;
+  return [...state.layouts.entries()].sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0))[0]?.[0] || null;
+}
+
+function useLocalStore(reason) {
+  let saved = {};
+  try { saved = JSON.parse(lsGet(LS_LOCAL) || "{}"); } catch {}
+  for (const [id, l] of Object.entries(saved)) state.layouts.set(id, l);
+  const persist = () => lsSet(LS_LOCAL, JSON.stringify(Object.fromEntries(state.layouts)));
+  store = { kind: "local", save: async () => persist(), remove: async () => persist() };
+  setStatus(reason || "Saving in this browser only");
+  const first = pickInitial();
+  if (first) openLayout(first); else renderLayoutList();
+}
+
+async function connect() {
+  let db = null;
+  try { db = window.claude?.use ? await window.claude.use("db") : null; } catch { db = null; }
+  if (!db) return useLocalStore();
+  const col = db.collection("layouts");
+  store = {
+    kind: "db",
+    save: (id, body) => col.doc(id).set(body),
+    remove: (id) => col.doc(id).delete(),
+  };
+  let first = true;
+  const slow = setTimeout(() => setStatus("Can't reach saved layouts yet", true), 10000);
+  col.onSnapshot((snap) => {
+    if (!snap.metadata.fromCache) clearTimeout(slow);
+    const seen = new Set();
+    for (const doc of snap.docs) {
+      const body = doc.data();
+      seen.add(doc.id);
+      const local = state.layouts.get(doc.id);
+      const editingThis = doc.id === state.currentId && (dirty || writing || state.dragging);
+      if (editingThis || doc.metadata.hasPendingWrites) continue;
+      if (!local || local.name !== body.name || !sameItems(local.items, body.items)) {
+        state.layouts.set(doc.id, { name: body.name, items: body.items || [], updatedAt: body.updatedAt });
+        if (doc.id === state.currentId && !sameItems(cleanItems(), body.items || [])) openLayout(doc.id);
+      }
+    }
+    if (!snap.metadata.fromCache && !snap.metadata.hasPendingWrites) {
+      for (const id of [...state.layouts.keys()]) {
+        if (!seen.has(id) && !(id === state.currentId && (dirty || writing))) state.layouts.delete(id);
+      }
+    }
+    if (first || !state.layouts.has(state.currentId)) {
+      first = false;
+      const pick = state.layouts.has(state.currentId) ? state.currentId : pickInitial();
+      if (pick) openLayout(pick);
+      else { state.currentId = null; state.items = []; rebuildAll(); }
+    }
+    if (!dirty && !writing) setStatus(snap.metadata.fromCache ? "Loading layouts…" : "Saved");
+    renderLayoutList();
+  }, (err) => {
+    clearTimeout(slow);
+    setStatus(err.code === "revoked" ? "Saving is no longer available" : "Couldn't load saved layouts", true);
+  });
+}
+
+// ------------------------------------------------------------------ walk mode
+const EYE = 1.6, RADIUS = 0.22, SPEED = 1.4, RUN = 2.8;
+const SPAWN = { x: 1.55, z: -5.1, yaw: 0 }; // just inside the reception door, facing the front windows
+const coarse = window.matchMedia("(pointer: coarse)").matches;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const walk = { pos: new THREE.Vector3(SPAWN.x, 0, SPAWN.z), yaw: SPAWN.yaw, pitch: 0, y: 0, vy: 0, bob: 0,
+  keys: new Set(), joy: null, look: null, locked: false, lockFailed: false, saved: null };
+
+// you-are-here arrow, only drawn on the minimap (layer 1)
+const marker = new THREE.Group();
+const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.55, 3), new THREE.MeshBasicMaterial({ color: 0xd9452f, depthTest: false }));
+arrow.rotation.x = -Math.PI / 2;
+arrow.renderOrder = 20;
+arrow.layers.set(1);
+marker.add(arrow);
+scene.add(marker);
+const mapCam = new THREE.OrthographicCamera(-3, 3, 5, -5, 0.1, 100);
+mapCam.layers.enable(1);
+const mini = { w: 120, h: 200 };
+
+function sizeMinimap(w, h) {
+  const hw = (B[1] - B[0]) / 2 + 0.3, hh = (B[3] - B[2]) / 2 + 0.3;
+  Object.assign(mapCam, { left: -hw, right: hw, top: hh, bottom: -hh });
+  mapCam.updateProjectionMatrix();
+  mapCam.position.set(center.x, 30, center.z + 0.001);
+  mapCam.lookAt(center);
+  mini.h = Math.round(Math.min(230, h * 0.34));
+  mini.w = Math.round((mini.h * hw) / hh);
+  Object.assign($("minimap").style, { width: mini.w + "px", height: mini.h + "px" });
+  $("walkHelp").style.maxWidth = `min(380px, calc(100% - ${mini.w + 40}px))`;
+}
+function renderMinimap() {
+  const W = stage.clientWidth;
+  const x = W - 14 - mini.w, y = 14;
+  const ceil = ceilingObj?.visible;
+  if (ceilingObj) ceilingObj.visible = false;
+  renderer.shadowMap.autoUpdate = false;
+  renderer.setScissorTest(true);
+  renderer.setScissor(x, y, mini.w, mini.h);
+  renderer.setViewport(x, y, mini.w, mini.h);
+  renderer.render(scene, mapCam);
+  renderer.setScissorTest(false);
+  renderer.setViewport(0, 0, W, stage.clientHeight);
+  renderer.shadowMap.autoUpdate = true;
+  if (ceilingObj) ceilingObj.visible = ceil;
+}
+
+function blocked(x, z) {
+  for (const o of OBST) {
+    if (o.y0 > 1.0 || o.y1 < 0.12) continue; // wall cabinets, hood etc. are above head-bump height
+    const nx = clamp(x, o.x0, o.x1), nz = clamp(z, o.z0, o.z1);
+    if ((x - nx) ** 2 + (z - nz) ** 2 < RADIUS * RADIUS) return true;
+  }
+  for (const it of state.items) {
+    if (it.type === "rug" || it.h < 15) continue;
+    const c = Math.cos(it.rot * DEG), s = Math.sin(it.rot * DEG);
+    const dx = x - it.x, dz = z - it.z;
+    const lx = dx * c - dz * s, lz = dx * s + dz * c;
+    const hw = it.w / 200, hd = it.d / 200;
+    const nx = clamp(lx, -hw, hw), nz = clamp(lz, -hd, hd);
+    if ((lx - nx) ** 2 + (lz - nz) ** 2 < RADIUS * RADIUS) return true;
+  }
+  return false;
+}
+function respawn() {
+  walk.pos.set(SPAWN.x, 0, SPAWN.z);
+  walk.yaw = SPAWN.yaw;
+  walk.pitch = 0;
+}
+function enterWalk() {
+  if (!META) return;
+  if (mode !== "walk") {
+    walk.saved = { mode, pos: persp.position.clone(), target: controls3d.target.clone() };
+  }
+  select(null);
+  mode = "walk";
+  cam = persp;
+  controls3d.enabled = controlsTop.enabled = false;
+  persp.fov = 70;
+  persp.updateProjectionMatrix();
+  if (blocked(walk.pos.x, walk.pos.z)) respawn();
+  for (const [id, on] of [["v3d", false], ["vTop", false], ["vWalk", true]]) $(id).setAttribute("aria-pressed", on);
+  $("viewOpts").hidden = true;
+  $("hint").hidden = true;
+  $("walkHud").hidden = false;
+  $("lockPrompt").hidden = coarse || walk.lockFailed;
+  applyDisplay();
+  applyTheme(); // sky behind the windows
+}
+function leaveWalk() {
+  if (document.pointerLockElement) document.exitPointerLock?.();
+  walk.keys.clear();
+  walk.joy = walk.look = null;
+  $("joy").hidden = true;
+  $("walkHud").hidden = true;
+  $("viewOpts").hidden = false;
+  $("hint").hidden = !!state.selected;
+  persp.fov = 45;
+  persp.updateProjectionMatrix();
+  persp.rotation.set(0, 0, 0);
+  queueMicrotask(applyTheme);
+  if (walk.saved) {
+    persp.position.copy(walk.saved.pos);
+    controls3d.target.copy(walk.saved.target);
+  }
+}
+$("walkExit").onclick = () => setMode(walk.saved?.mode === "top" ? "top" : "3d");
+$("walkRespawn").onclick = respawn;
+
+function requestLock() {
+  try {
+    const p = renderer.domElement.requestPointerLock();
+    if (p && p.catch) p.catch(lockFailed);
+  } catch { lockFailed(); }
+}
+function lockFailed() {
+  walk.lockFailed = true;
+  $("lockPrompt").hidden = true;
+}
+document.addEventListener("pointerlockerror", lockFailed);
+document.addEventListener("pointerlockchange", () => {
+  walk.locked = document.pointerLockElement === renderer.domElement;
+  if (mode === "walk") $("lockPrompt").hidden = walk.locked || coarse || walk.lockFailed;
+});
+document.addEventListener("mousemove", (e) => {
+  if (!walk.locked || mode !== "walk") return;
+  look(e.movementX * 0.0022, e.movementY * 0.0022);
+});
+function look(dx, dy) {
+  walk.yaw -= dx;
+  walk.pitch = clamp(walk.pitch - dy, -1.35, 1.35);
+}
+function walkDown(e) {
+  const r = renderer.domElement.getBoundingClientRect();
+  const x = e.clientX - r.left, y = e.clientY - r.top;
+  renderer.domElement.setPointerCapture(e.pointerId);
+  if (e.pointerType === "mouse") {
+    if (!walk.locked && !walk.lockFailed) requestLock();
+    walk.look = { id: e.pointerId, x: e.clientX, y: e.clientY };
+    return;
+  }
+  if (x < r.width * 0.5 && !walk.joy) {
+    walk.joy = { id: e.pointerId, cx: x, cy: y, dx: 0, dy: 0 };
+    Object.assign($("joy").style, { left: x + "px", top: y + "px" });
+    $("joyKnob").style.transform = "";
+    $("joy").hidden = false;
+  } else if (!walk.look) {
+    walk.look = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  }
+}
+function walkMove(e) {
+  if (walk.joy && e.pointerId === walk.joy.id) {
+    const r = renderer.domElement.getBoundingClientRect();
+    let dx = (e.clientX - r.left - walk.joy.cx) / 45, dy = (e.clientY - r.top - walk.joy.cy) / 45;
+    const l = Math.hypot(dx, dy);
+    if (l > 1) { dx /= l; dy /= l; }
+    walk.joy.dx = dx;
+    walk.joy.dy = dy;
+    $("joyKnob").style.transform = `translate(${dx * 33}px, ${dy * 33}px)`;
+  } else if (walk.look && e.pointerId === walk.look.id && !walk.locked) {
+    const k = e.pointerType === "mouse" ? 0.004 : 0.006;
+    look((e.clientX - walk.look.x) * k, (e.clientY - walk.look.y) * k);
+    walk.look.x = e.clientX;
+    walk.look.y = e.clientY;
+  }
+}
+function walkUp(e) {
+  if (walk.joy && e.pointerId === walk.joy.id) { walk.joy = null; $("joy").hidden = true; }
+  if (walk.look && e.pointerId === walk.look.id) walk.look = null;
+}
+function updateWalk(dt) {
+  const k = walk.keys;
+  let f = 0, s = 0;
+  if (k.has("KeyW") || k.has("ArrowUp")) f += 1;
+  if (k.has("KeyS") || k.has("ArrowDown")) f -= 1;
+  if (k.has("KeyD") || k.has("ArrowRight")) s += 1;
+  if (k.has("KeyA") || k.has("ArrowLeft")) s -= 1;
+  if (walk.joy) { f -= walk.joy.dy; s += walk.joy.dx; }
+  const len = Math.hypot(f, s);
+  if (len > 1) { f /= len; s /= len; }
+  const run = k.has("ShiftLeft") || k.has("ShiftRight") || (walk.joy && len > 0.95);
+  const sp = run ? RUN : SPEED;
+  const sy = Math.sin(walk.yaw), cy = Math.cos(walk.yaw);
+  const mx = (-sy * f + cy * s) * sp * dt, mz = (-cy * f - sy * s) * sp * dt;
+  if (mx && !blocked(walk.pos.x + mx, walk.pos.z)) walk.pos.x += mx;
+  if (mz && !blocked(walk.pos.x, walk.pos.z + mz)) walk.pos.z += mz;
+  if (walk.y > 0 || walk.vy > 0) {
+    walk.vy -= 9.8 * dt;
+    walk.y += walk.vy * dt;
+    if (walk.y <= 0) { walk.y = 0; walk.vy = 0; }
+  }
+  let bobY = 0;
+  if (len > 0.1 && walk.y === 0 && !reduceMotion) {
+    walk.bob += dt * sp * 5.5;
+    bobY = Math.sin(walk.bob) * 0.022;
+  }
+  persp.position.set(walk.pos.x, EYE + walk.y + bobY, walk.pos.z);
+  persp.rotation.set(walk.pitch, walk.yaw, 0, "YXZ");
+  marker.position.set(walk.pos.x, 2.5, walk.pos.z);
+  marker.rotation.y = walk.yaw;
+}
+
+// ------------------------------------------------------------------ go
+const themeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+themeQuery.addEventListener?.("change", applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+applyTheme();
+resize();
+renderLayoutList();
+connect();
+
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.05);
+  if (mode === "walk") updateWalk(dt); else controls().update();
+  renderer.render(scene, cam);
+  labelRenderer.render(scene, cam);
+  if (mode === "walk") renderMinimap();
+});
+</script>
+
+</body>
+</html>
