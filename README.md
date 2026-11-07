@@ -1,6 +1,6 @@
 # Flats of London
 
-3D models of London flats with a furniture planner. The first is a one-bedroom fourth-floor flat (53 m², ceiling 2.26 m), built from the listing's floor plan and viewing photos, with a furniture planner.
+3D models of London flats with a furniture planner. The first is a one-bedroom fourth-floor flat (53 m², ceiling 2.26 m), built from the listing's floor plan and viewing photos.
 
 **Live site:** https://flats-of-london.github.io/ (planner for this flat: `/fourth-floor/`, or `/fourth-floor/#walk` to start walking)
 
