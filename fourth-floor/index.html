@@ -295,6 +295,7 @@ const CATALOG = [
     { type: "tv", name: "TV unit", w: 160, d: 40, h: 45 },
     { type: "shelf", name: "Bookshelf", w: 80, d: 30, h: 180 },
     { type: "rug", name: "Rug", w: 200, d: 140, h: 1 },
+    { type: "twotier", name: "Two-tier drinks table", w: 60, d: 40, h: 85, color: "#6b4428" },
   ]],
   ["Dining & work", [
     { type: "table", name: "Dining table", w: 120, d: 80, h: 75 },
@@ -314,6 +315,8 @@ const CATALOG = [
   ["Other", [
     { type: "plant", name: "Plant", w: 40, d: 40, h: 120 },
     { type: "box", name: "Storage boxes", w: 60, d: 40, h: 40 },
+    { type: "coffeemachine", name: "Coffee machine (bean-to-cup)", w: 24, d: 40, h: 34, color: "#1f2124", opt: { sits: true } },
+    { type: "bottles", name: "Bottles, set of 5", w: 50, d: 25, h: 33, opt: { decor: true } },
   ]],
   ["Sofas & armchairs", [
     {"type": "sofa", "name": "KIVIK 3-seat sofa", "w": 228, "d": 95, "h": 83, "color": "#6b7075", "opt": {"arm": 0.18}},
@@ -381,6 +384,7 @@ const CATALOG = [
     {"type": "tv", "name": "HEMNES TV bench", "w": 148, "d": 47, "h": 57, "color": "#ece6da"},
     {"type": "tv", "name": "RÅDMANSÖ TV bench", "w": 176, "d": 48, "h": 66, "color": "#6b4428"},
     {"type": "trolley", "name": "RÅSKOG trolley", "w": 45, "d": 35, "h": 77, "color": "#7e9c8f"},
+    {"type": "trolley", "name": "KUNGSFORS kitchen trolley, 3 shelves", "w": 60, "d": 40, "h": 90, "color": "#b8bcc0"},
     {"type": "drawers", "name": "EKET cabinet with 2 drawers", "w": 35, "d": 35, "h": 35, "color": "#f0efea", "opt": {"rows": 2}},
     {"type": "drawers", "name": "GULLABERG shoe cabinet", "w": 88, "d": 30, "h": 122, "color": "#9aa0a3", "opt": {"rows": 2}},
   ], "IKEA"],
@@ -432,7 +436,8 @@ const CATALOG = [
 const DEFAULT_COLOR = { sofa: "#5d7183", bed: "#8fa3b8", table: "#b5865a", chair: "#b5865a", desk: "#e8e8e6", deskchair: "#2b2f33",
   tv: "#e8e8e6", shelf: "#b5865a", rug: "#a68b6d", cabinet: "#b5865a", drawers: "#b5865a", wardrobe: "#e8e8e6", plant: "#4f7a4a", box: "#c9b48f",
   cubes: "#f0efea", openshelf: "#d8b98a", cornersofa: "#4a4f55", lounge: "#cdbfa6", roundtable: "#f0efea", trolley: "#7e9c8f", lamp: "#3b3d40", mirror: "#2c2c2e", ringlamp: "#e8742c", framechair: "#d9cfbf",
-  pendant: "#c9a46a", globelamp: "#4a3326", frame: "#2c2c2e", cushion: "#e9a36f" };
+  pendant: "#c9a46a", globelamp: "#4a3326", frame: "#2c2c2e", cushion: "#e9a36f",
+  twotier: "#6b4428", coffeemachine: "#1f2124", bottles: "#a0581f" };
 const SWATCHES = ["#5d7183", "#7a8f6a", "#b5865a", "#e8e8e6", "#2b2f33", "#b0574a"];
 
 // Example arrangement (flat coordinates in metres: x east, z = minus plan-north; rot in degrees, 0 = front faces down the plan)
@@ -757,6 +762,7 @@ function makeMats(it) {
     green: new THREE.MeshStandardMaterial({ color: "#4f7a4a", roughness: 0.9 }),
     mirror: new THREE.MeshStandardMaterial({ color: "#c9d6dd", roughness: 0.05, metalness: 0.3 }),
     shade: new THREE.MeshStandardMaterial({ color: "#f3eee4", roughness: 0.9, side: THREE.DoubleSide }),
+    steel: new THREE.MeshStandardMaterial({ color: "#b8bcc0", roughness: 0.3, metalness: 0.6 }),
   };
 }
 const unitBox = new THREE.BoxGeometry(1, 1, 1);
@@ -959,6 +965,39 @@ const BUILD = {
   cushion(g, w, d, h, M) {
     box(g, -w / 2 + 0.02, w / 2 - 0.02, 0, h, -d / 2, d / 2, M.main);
     box(g, -w / 2, w / 2, 0.02, h - 0.02, -d / 2 + 0.02, d / 2 - 0.02, M.main);
+  },
+  twotier(g, w, d, h, M, it) {
+    const shelf = it?.opt?.shelf ?? 0.25, t = 0.025;
+    box(g, -w / 2, w / 2, h - t, h, -d / 2, d / 2, M.main);
+    box(g, -w / 2 + 0.03, w / 2 - 0.03, shelf - t, shelf, -d / 2 + 0.03, d / 2 - 0.03, M.main);
+    box(g, -w / 2 + 0.03, w / 2 - 0.03, shelf, shelf + 0.03, -d / 2 + 0.03, -d / 2 + 0.045, M.main);
+    legs(g, w, d, h - t, 0.035, 0.016, M.main);
+  },
+  coffeemachine(g, w, d, h, M) {
+    const front = d / 2 - 0.12;
+    box(g, -w / 2, w / 2, 0, h, -d / 2, front, M.main);
+    box(g, -w / 2, w / 2, h - 0.11, h, front, d / 2, M.main);
+    box(g, -w / 2 + 0.02, w / 2 - 0.02, 0, 0.03, front, d / 2, M.steel);
+    box(g, -0.03, 0.03, h - 0.15, h - 0.11, d / 2 - 0.08, d / 2 - 0.04, M.steel);
+    box(g, -w / 2 + 0.03, w / 2 - 0.03, h, h + 0.012, -d / 2 + 0.03, -d / 2 + 0.16, M.steel);
+    box(g, -w / 2 + 0.03, w / 2 - 0.03, h - 0.09, h - 0.03, d / 2, d / 2 + 0.003, M.dark);
+    const cup = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.03, 0.07, 16), M.white);
+    cup.position.set(0, 0.065, d / 2 - 0.06);
+    g.add(cup);
+  },
+  bottles(g, w, d, h, M) {
+    const kinds = [["#2f5d3a", 0.038, 1.0, 0.85], ["#a0581f", 0.042, 0.78, 0.8], ["#d8e4e8", 0.04, 0.88, 0.45], ["#e8642c", 0.037, 0.95, 0.8], ["#3a1d14", 0.036, 0.9, 0.85]];
+    kinds.forEach(([col, r, k, op], i) => {
+      const glass = new THREE.MeshStandardMaterial({ color: col, roughness: 0.15, transparent: op < 1, opacity: op });
+      g.userData.mats.push(glass);
+      const x = -w / 2 + 0.045 + ((w - 0.09) * i) / (kinds.length - 1), z = (i % 2 ? 0.05 : -0.04) * (d / 0.25) * 0.8;
+      const bh = h * k, body = bh * 0.62;
+      const add = (geo, y) => { const m = new THREE.Mesh(geo, glass); m.position.set(x, y, z); m.castShadow = true; g.add(m); };
+      if (i === 1) add(new THREE.BoxGeometry(r * 1.8, body, r * 1.8), body / 2);
+      else add(new THREE.CylinderGeometry(r, r, body, 16), body / 2);
+      add(new THREE.CylinderGeometry(r * 0.35, r * 0.9, bh * 0.16, 12), body + bh * 0.08);
+      add(new THREE.CylinderGeometry(r * 0.32, r * 0.32, bh * 0.22, 10), body + bh * 0.27);
+    });
   },
   mirror(g, w, d, h, M) {
     box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main);
