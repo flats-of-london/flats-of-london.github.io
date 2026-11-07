@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Archive – Flats of London</title>
+<link rel="icon" href="../favicon.ico">
+<style>
+/* Layout: a short index of flats; one card per flat, stacked on phones. Same drafting palette as the planner. */
+:root {
+  --bg: #e9eef0; --panel: #f7f9fa; --raised: #ffffff; --ink: #1b2a32; --muted: #5b6b73; --line: #cfd8dc;
+  --accent: #a8622a; --accent-ink: #ffffff;
+  --font-ui: "Barlow Semi Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0f1518; --panel: #151d21; --raised: #1c262b; --ink: #e2e9ec; --muted: #8d9da5; --line: #2a3840;
+    --accent: #d08b4b; --accent-ink: #1a1208; color-scheme: dark; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 var(--font-ui);
+  padding: max(32px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(40px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+main { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+header h1 { margin: 0; font-size: clamp(34px, 6vw, 52px); font-weight: 700; letter-spacing: -.01em; line-height: 1.05; text-wrap: balance; }
+header p { margin: 8px 0 0; color: var(--muted); font-size: 18px; max-width: 60ch; }
+.flats { display: grid; gap: 20px; }
+.flat { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 24px; background: var(--raised);
+  border: 1px solid var(--line); border-radius: 10px; padding: 16px; align-items: center; }
+.flat img { width: 100%; max-width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: var(--bg); display: block; }
+.flat h2 { margin: 0; font-size: 26px; font-weight: 700; }
+.facts { margin: 6px 0 14px; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px;
+  font-family: var(--font-mono); font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.flat p { margin: 0 0 16px; max-width: 58ch; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn { display: inline-block; text-decoration: none; color: var(--ink); border: 1px solid var(--line); background: var(--panel);
+  border-radius: 6px; padding: 7px 14px; font-weight: 600; }
+.btn:hover { border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+footer { color: var(--muted); font-size: 14px; max-width: 70ch; }
+@media (max-width: 640px) { .flat { grid-template-columns: minmax(0, 1fr); } }
+
+.filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; background: var(--raised); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 16px; }
+.filters label { display: flex; flex-direction: column; font-size: 13px; color: var(--muted); gap: 2px; }
+.filters input, .filters select { font: 15px var(--font-ui); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--panel); color: var(--ink); min-width: 120px; }
+.empty { color: var(--muted); }
+nav a, footer a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+<header><h1><a href="../" style="color:inherit;text-decoration:none">Flats of London</a></h1></header>
+<section aria-label="Archived flats"><h2>Archive</h2><p>Flats first listed more than 3 days ago. They may already be let.</p><form class="filters" onsubmit="return false" aria-label="Filter flats">
+  <label>Min £ pcm<input id="pmin" type="number" min="0" step="100" inputmode="numeric"></label>
+  <label>Max £ pcm<input id="pmax" type="number" min="0" step="100" inputmode="numeric"></label>
+  <label>Area<select id="area"><option value="">All of Zone 1</option></select></label>
+  <label>Move in by<input id="movein" type="date"></label>
+</form><div class="flats" id="list"></div></section>
+<script>
+const ARCHIVE = true;
+const fmt = (n) => "£" + n.toLocaleString("en-GB");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let FLATS = [];
+function render() {
+  const min = +document.getElementById("pmin").value || 0, max = +document.getElementById("pmax").value || Infinity;
+  const area = document.getElementById("area").value, by = document.getElementById("movein").value;
+  const list = FLATS.filter((f) => (f.price_pcm ?? 0) >= min && (f.price_pcm ?? 0) <= max
+    && (!area || f.area_name === area) && (!by || !f.available_from || f.available_from <= by));
+  const box = document.getElementById("list");
+  box.innerHTML = list.length ? "" : `<p class="empty">${FLATS.length ? "No flats match these filters." :
+    ARCHIVE ? "No archived flats yet." : "No new flats in the last 3 days yet. New Zone 1 rentals appear here as soon as their 3D model passes our checks."}</p>`;
+  for (const f of list) {
+    const tel = (f.agent_phone || "").replace(/[^+0-9]/g, "");
+    const el = document.createElement("article"); el.className = "flat";
+    el.innerHTML = `<a href="../planner/?flat=${esc(f.id)}"><img src="../flats/${esc(f.id)}/preview.jpg" alt="3D cut-away of ${esc(f.title)}" width="720" height="720" loading="lazy"></a>
+      <div><h2>${esc(f.title)}</h2>
+      <ul class="facts">${[f.price_pcm && fmt(f.price_pcm) + " pcm", f.area_m2 && f.area_m2 + " m²", f.postcode,
+        f.available_from && "move in " + f.available_from, f.listed_date && "listed " + f.listed_date.slice(0, 10)]
+        .filter(Boolean).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <p>${esc(f.agent_name || "")}</p>
+      <div class="actions"><a class="btn primary" href="../planner/?flat=${esc(f.id)}">Plan furniture</a>
+      <a class="btn" href="../planner/?flat=${esc(f.id)}#walk">Walk through</a>
+      ${tel ? `<a class="btn" href="tel:${tel}">Call ${esc(f.agent_phone)}</a>` : ""}
+      <a class="btn" href="${esc(f.source_url)}" rel="noopener nofollow">Original listing</a></div></div>`;
+    box.append(el);
+  }
+}
+fetch("../flats.json?" + Date.now()).then((r) => r.json()).then((m) => {
+  FLATS = m.flats.filter((f) => !!f.archived === ARCHIVE).sort((a, b) => (b.listed_date || "").localeCompare(a.listed_date || ""));
+  const sel = document.getElementById("area");
+  for (const a of [...new Set(FLATS.map((f) => f.area_name).filter(Boolean))].sort()) sel.add(new Option(a, a));
+  for (const id of ["pmin", "pmax", "area", "movein"]) document.getElementById(id).oninput = render;
+  render();
+}).catch(() => { document.getElementById("list").innerHTML = '<p class="empty">Could not load the flat list.</p>'; });
+</script>
+<footer><p>Takedown: if you are the agent or landlord of a listed flat and want it removed, <a href="https://github.com/flats-of-london/flats-of-london.github.io/issues/new?title=Takedown">open an issue</a> with the page link. We remove flats within 24 hours.</p></footer>
+</main>
+</body>
+</html>
