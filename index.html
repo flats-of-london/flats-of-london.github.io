@@ -43,6 +43,14 @@ header p { margin: 8px 0 0; color: var(--muted); font-size: 18px; max-width: 60c
 .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 footer { color: var(--muted); font-size: 14px; max-width: 70ch; }
 @media (max-width: 640px) { .flat { grid-template-columns: minmax(0, 1fr); } }
+
+.filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; background: var(--raised); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 16px; }
+.filters label { display: flex; flex-direction: column; font-size: 13px; color: var(--muted); gap: 2px; }
+.filters input, .filters select { font: 15px var(--font-ui); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--panel); color: var(--ink); min-width: 120px; }
+.empty { color: var(--muted); }
+nav a, footer a { color: var(--accent); }
 </style>
 </head>
 <body>
@@ -52,6 +60,53 @@ footer { color: var(--muted); font-size: 14px; max-width: 70ch; }
     <p>3D models of flats we've viewed, built from their floor plans and photos. Plan furniture, check what fits, and walk through each one.</p>
   </header>
 
+<!-- live-list -->
+<section aria-label="New flats"><h2>New in the last 3 days</h2><form class="filters" onsubmit="return false" aria-label="Filter flats">
+  <label>Min £ pcm<input id="pmin" type="number" min="0" step="100" inputmode="numeric"></label>
+  <label>Max £ pcm<input id="pmax" type="number" min="0" step="100" inputmode="numeric"></label>
+  <label>Area<select id="area"><option value="">All of Zone 1</option></select></label>
+  <label>Move in by<input id="movein" type="date"></label>
+</form><div class="flats" id="list"></div></section>
+<script>
+const ARCHIVE = false;
+const fmt = (n) => "£" + n.toLocaleString("en-GB");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let FLATS = [];
+function render() {
+  const min = +document.getElementById("pmin").value || 0, max = +document.getElementById("pmax").value || Infinity;
+  const area = document.getElementById("area").value, by = document.getElementById("movein").value;
+  const list = FLATS.filter((f) => (f.price_pcm ?? 0) >= min && (f.price_pcm ?? 0) <= max
+    && (!area || f.area_name === area) && (!by || !f.available_from || f.available_from <= by));
+  const box = document.getElementById("list");
+  box.innerHTML = list.length ? "" : `<p class="empty">${FLATS.length ? "No flats match these filters." :
+    ARCHIVE ? "No archived flats yet." : "No new flats in the last 3 days yet. New Zone 1 rentals appear here as soon as their 3D model passes our checks."}</p>`;
+  for (const f of list) {
+    const tel = (f.agent_phone || "").replace(/[^+0-9]/g, "");
+    const el = document.createElement("article"); el.className = "flat";
+    el.innerHTML = `<a href="./planner/?flat=${esc(f.id)}"><img src="./flats/${esc(f.id)}/preview.jpg" alt="3D cut-away of ${esc(f.title)}" width="720" height="720" loading="lazy"></a>
+      <div><h2>${esc(f.title)}</h2>
+      <ul class="facts">${[f.price_pcm && fmt(f.price_pcm) + " pcm", f.area_m2 && f.area_m2 + " m²", f.postcode,
+        f.available_from && "move in " + f.available_from, f.listed_date && "listed " + f.listed_date.slice(0, 10)]
+        .filter(Boolean).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>
+      <p>${esc(f.agent_name || "")}</p>
+      <div class="actions"><a class="btn primary" href="./planner/?flat=${esc(f.id)}">Plan furniture</a>
+      <a class="btn" href="./planner/?flat=${esc(f.id)}#walk">Walk through</a>
+      ${tel ? `<a class="btn" href="tel:${tel}">Call ${esc(f.agent_phone)}</a>` : ""}
+      <a class="btn" href="${esc(f.source_url)}" rel="noopener nofollow">Original listing</a></div></div>`;
+    box.append(el);
+  }
+}
+fetch("./flats.json?" + Date.now()).then((r) => r.json()).then((m) => {
+  FLATS = m.flats.filter((f) => !!f.archived === ARCHIVE).sort((a, b) => (b.listed_date || "").localeCompare(a.listed_date || ""));
+  const sel = document.getElementById("area");
+  for (const a of [...new Set(FLATS.map((f) => f.area_name).filter(Boolean))].sort()) sel.add(new Option(a, a));
+  for (const id of ["pmin", "pmax", "area", "movein"]) document.getElementById(id).oninput = render;
+  render();
+}).catch(() => { document.getElementById("list").innerHTML = '<p class="empty">Could not load the flat list.</p>'; });
+</script>
+<nav><a href="archive/">Archive of older flats →</a></nav>
+<!-- /live-list -->
+  <h2>Demo flat</h2>
   <section class="flats" aria-label="Flats">
     <article class="flat">
       <a href="fourth-floor/" aria-label="Open the fourth-floor flat"><img src="fourth-floor/preview.jpg" alt="Cut-away 3D view of the fourth-floor flat: reception with two front windows, galley kitchen, bathroom, bedroom and stairwell" width="720" height="720"></a>
@@ -70,7 +125,7 @@ footer { color: var(--muted); font-size: 14px; max-width: 70ch; }
     </article>
   </section>
 
-  <footer>Room sizes come from the listings' floor plans and are approximate, so measure before buying anything that has to fit tightly. Furniture sizes come from manufacturers' published dimensions. Not affiliated with any estate agent or retailer.</footer>
+  <footer>Room sizes come from the listings' floor plans and are approximate, so measure before buying anything that has to fit tightly. Furniture sizes come from manufacturers' published dimensions. Not affiliated with any estate agent or retailer. <!-- takedown --><p>Takedown: if you are the agent or landlord of a listed flat and want it removed, <a href="https://github.com/flats-of-london/flats-of-london.github.io/issues/new?title=Takedown">open an issue</a> with the page link. We remove flats within 24 hours.</p><!-- /takedown --></footer>
 </main>
 </body>
 </html>
