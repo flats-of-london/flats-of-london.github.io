@@ -324,6 +324,7 @@ const CATALOG = [
     {"type": "sofa", "name": "KLIPPAN 2-seat sofa", "w": 180, "d": 88, "h": 66, "color": "#2f3033", "opt": {"arm": 0.2}},
     {"type": "sofa", "name": "VIMLE 3-seat sofa", "w": 241, "d": 98, "h": 83, "color": "#8a7a66", "opt": {"arm": 0.15}},
     {"type": "sofa", "name": "LANDSKRONA 3-seat sofa", "w": 204, "d": 89, "h": 78, "color": "#7f9a86", "opt": {"arm": 0.1}},
+    {"type": "sofa", "name": "SALTSJÖBADEN 3-seat sofa", "w": 205, "d": 88, "h": 90, "color": "#9c4a35", "opt": {"arm": 0.13}},
     {"type": "cornersofa", "name": "FRIHETEN corner sofa-bed, chaise right", "w": 230, "d": 151, "h": 86, "color": "#4a4f55", "opt": {"variant": "R", "seat": 0.9, "chaise": 0.78, "arm": 0.12}},
     {"type": "cornersofa", "name": "FRIHETEN corner sofa-bed, chaise left", "w": 230, "d": 151, "h": 86, "color": "#4a4f55", "opt": {"variant": "L", "seat": 0.9, "chaise": 0.78, "arm": 0.12}},
     {"type": "lounge", "name": "POÄNG armchair", "w": 68, "d": 82, "h": 100, "color": "#cdbfa6"},
@@ -344,11 +345,14 @@ const CATALOG = [
     {"type": "table", "name": "NORDEN gateleg table, one leaf up", "w": 89, "d": 80, "h": 74, "color": "#d9c3a0"},
     {"type": "table", "name": "NORDEN gateleg table, folded", "w": 26, "d": 80, "h": 74, "color": "#d9c3a0", "opt": {"inset": 0.03}},
     {"type": "roundtable", "name": "DOCKSTA round table", "w": 103, "d": 103, "h": 75, "color": "#f0efea"},
+    {"type": "roundtable", "name": "SKANSNÄS extendable round table (opens to 170)", "w": 115, "d": 115, "h": 75, "color": "#7a4b2c"},
+    {"type": "roundtable", "name": "JAKOBSFORS round coffee table", "w": 80, "d": 80, "h": 42, "color": "#4a3326"},
     {"type": "chair", "name": "STEFAN chair", "w": 42, "d": 49, "h": 90, "color": "#5a4636"},
     {"type": "chair", "name": "SANDSBERG chair", "w": 39, "d": 47, "h": 77, "color": "#2c2c2e"},
     {"type": "chair", "name": "TEODORES chair", "w": 46, "d": 54, "h": 80, "color": "#f0efea"},
     {"type": "chair", "name": "LISABO chair", "w": 46, "d": 51, "h": 80, "color": "#d2b48c"},
     {"type": "chair", "name": "ROSENTORP chair", "w": 44, "d": 53, "h": 91, "color": "#f0efea"},
+    {"type": "chair", "name": "SKÅLSTA dining chair", "w": 52, "d": 50, "h": 80, "color": "#7d8466"},
   ], "IKEA"],
   ["Desks & office", [
     {"type": "desk", "name": "MICKE desk", "w": 105, "d": 50, "h": 75, "color": "#f0efea"},
@@ -375,6 +379,7 @@ const CATALOG = [
     {"type": "tv", "name": "BESTÅ TV bench", "w": 180, "d": 42, "h": 38, "color": "#f0efea"},
     {"type": "tv", "name": "LACK TV bench", "w": 160, "d": 35, "h": 36, "color": "#3a2f2a"},
     {"type": "tv", "name": "HEMNES TV bench", "w": 148, "d": 47, "h": 57, "color": "#ece6da"},
+    {"type": "tv", "name": "RÅDMANSÖ TV bench", "w": 176, "d": 48, "h": 66, "color": "#6b4428"},
     {"type": "trolley", "name": "RÅSKOG trolley", "w": 45, "d": 35, "h": 77, "color": "#7e9c8f"},
     {"type": "drawers", "name": "EKET cabinet with 2 drawers", "w": 35, "d": 35, "h": 35, "color": "#f0efea", "opt": {"rows": 2}},
     {"type": "drawers", "name": "GULLABERG shoe cabinet", "w": 88, "d": 30, "h": 122, "color": "#9aa0a3", "opt": {"rows": 2}},
@@ -402,21 +407,32 @@ const CATALOG = [
     {"type": "wardrobe", "name": "BRIMNES wardrobe, 2 doors", "w": 78, "d": 50, "h": 190, "color": "#f0efea", "opt": {"doors": 2}},
     {"type": "wardrobe", "name": "KLEPPSTAD wardrobe, 2 doors", "w": 79, "d": 55, "h": 176, "color": "#f0efea", "opt": {"doors": 2}},
     {"type": "mirror", "name": "NISSEDAL mirror", "w": 65, "d": 4, "h": 150, "color": "#2c2c2e"},
+    {"type": "mirror", "name": "LINDBYN mirror", "w": 60, "d": 3, "h": 170, "color": "#2c2c2e"},
+    {"type": "frame", "name": "BLODFLÄDER picture, bold florals", "w": 52, "d": 3, "h": 72, "color": "#2c2c2e", "elev": 120, "opt": {"decor": true, "art": "florals"}},
+    {"type": "cushion", "name": "DYTÅG cushion, red-brown", "w": 50, "d": 15, "h": 50, "color": "#8f3f2c", "opt": {"decor": true}},
+    {"type": "cushion", "name": "SVARTPOPPEL cushion, light orange", "w": 50, "d": 15, "h": 50, "color": "#e9a36f", "opt": {"decor": true}},
+    {"type": "cushion", "name": "SANELA cushion, dark green", "w": 50, "d": 15, "h": 50, "color": "#2f4a35", "opt": {"decor": true}},
   ], "IKEA"],
   ["Rugs, lamps & plants", [
     {"type": "rug", "name": "STOCKHOLM rug", "w": 170, "d": 240, "h": 1, "color": "#3d3a36"},
     {"type": "rug", "name": "LOHALS rug", "w": 160, "d": 230, "h": 1, "color": "#c9b48f"},
+    {"type": "rug", "name": "MORUM rug, orange", "w": 160, "d": 230, "h": 1, "color": "#d9772f"},
+    {"type": "rug", "name": "ÄRENDE high-pile rug, orange", "w": 120, "d": 180, "h": 3, "color": "#e08a3c"},
     {"type": "lamp", "name": "HEKTAR floor lamp", "w": 34, "d": 34, "h": 181, "color": "#3b3d40"},
     {"type": "lamp", "name": "ÅRSTID floor lamp", "w": 36, "d": 36, "h": 155, "color": "#c8a45c"},
     {"type": "lamp", "name": "NYMÅNE floor lamp", "w": 25, "d": 25, "h": 170, "color": "#f0efea"},
+    {"type": "globelamp", "name": "MOSSPLYM floor uplighter/reading lamp", "w": 32, "d": 32, "h": 180, "color": "#4a3326"},
+    {"type": "pendant", "name": "SINNERLIG bamboo pendant", "w": 50, "d": 50, "h": 54, "color": "#c9a46a", "elev": 150},
     {"type": "ringlamp", "name": "VARMBLIXT table/wall lamp, round", "w": 30, "d": 11, "h": 30, "color": "#e8742c", "opt": {"sits": true}},
     {"type": "plant", "name": "FEJKA weeping fig, large", "w": 80, "d": 80, "h": 210, "color": "#4f7a4a"},
     {"type": "plant", "name": "FEJKA kentia palm", "w": 70, "d": 70, "h": 180, "color": "#4f7a4a"},
+    {"type": "plant", "name": "FEJKA monstera", "w": 60, "d": 60, "h": 90, "color": "#3f6b3c"},
   ], "IKEA"],
 ];
 const DEFAULT_COLOR = { sofa: "#5d7183", bed: "#8fa3b8", table: "#b5865a", chair: "#b5865a", desk: "#e8e8e6", deskchair: "#2b2f33",
   tv: "#e8e8e6", shelf: "#b5865a", rug: "#a68b6d", cabinet: "#b5865a", drawers: "#b5865a", wardrobe: "#e8e8e6", plant: "#4f7a4a", box: "#c9b48f",
-  cubes: "#f0efea", openshelf: "#d8b98a", cornersofa: "#4a4f55", lounge: "#cdbfa6", roundtable: "#f0efea", trolley: "#7e9c8f", lamp: "#3b3d40", mirror: "#2c2c2e", ringlamp: "#e8742c", framechair: "#d9cfbf" };
+  cubes: "#f0efea", openshelf: "#d8b98a", cornersofa: "#4a4f55", lounge: "#cdbfa6", roundtable: "#f0efea", trolley: "#7e9c8f", lamp: "#3b3d40", mirror: "#2c2c2e", ringlamp: "#e8742c", framechair: "#d9cfbf",
+  pendant: "#c9a46a", globelamp: "#4a3326", frame: "#2c2c2e", cushion: "#e9a36f" };
 const SWATCHES = ["#5d7183", "#7a8f6a", "#b5865a", "#e8e8e6", "#2b2f33", "#b0574a"];
 
 // Example arrangement (flat coordinates in metres: x east, z = minus plan-north; rot in degrees, 0 = front faces down the plan)
@@ -773,6 +789,25 @@ function beam(g, a, b, thick, width, mat) {
   m.castShadow = m.receiveShadow = true;
   g.add(m);
 }
+// a simple bold-florals print, seeded by name so each picture stays the same
+function artTexture(seed) {
+  let n = [...String(seed)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+  const rnd = () => ((n = (n * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const c = document.createElement("canvas");
+  c.width = 256; c.height = 360;
+  const x = c.getContext("2d");
+  x.fillStyle = "#f2e6d4"; x.fillRect(0, 0, 256, 360);
+  const pal = ["#e2683c", "#f0a35e", "#c8433a", "#e8a7a0", "#4f6b3e", "#f3c14b"];
+  for (let i = 0; i < 9; i++) {
+    const cx = 30 + rnd() * 196, cy = 30 + rnd() * 300, r = 18 + rnd() * 38, col = pal[i % pal.length];
+    x.fillStyle = col;
+    for (let k = 0; k < 6; k++) { const a = (k / 6) * Math.PI * 2; x.beginPath(); x.ellipse(cx + Math.cos(a) * r * 0.6, cy + Math.sin(a) * r * 0.6, r * 0.45, r * 0.28, a, 0, Math.PI * 2); x.fill(); }
+    x.fillStyle = "#f3c14b"; x.beginPath(); x.arc(cx, cy, r * 0.22, 0, Math.PI * 2); x.fill();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
 // local frame: x = width, y = up, z = depth; front faces +z
 const BUILD = {
   bed(g, w, d, h, M) {
@@ -888,6 +923,43 @@ const BUILD = {
     light.position.set(0, R + tube, 0.08);
     g.add(light);
   },
+  pendant(g, w, d, h, M, it) {
+    const r = Math.min(w, d) / 2, cord = (META?.ceiling || 2.26) - (it?.elev || 0) / 100;
+    Object.assign(M.main, { roughness: 0.9, side: THREE.DoubleSide });
+    M.main.userData.glow = M.main.color.clone().multiplyScalar(0.35);
+    const shade = new THREE.Mesh(new THREE.SphereGeometry(r, 28, 18), M.main);
+    shade.scale.y = h / (2 * r);
+    shade.position.y = h / 2;
+    shade.castShadow = true;
+    g.add(shade);
+    if (cord > h) cyl(g, 0.005, 0.005, h, cord, M.dark, 6);
+    const light = new THREE.PointLight(0xffc98a, 1.4, 5, 2);
+    light.position.y = h * 0.35;
+    g.add(light);
+  },
+  globelamp(g, w, d, h, M) {
+    const r = Math.min(w, d) / 2;
+    M.shade.userData.glow = new THREE.Color("#ffe7c4").multiplyScalar(0.55);
+    cyl(g, r, r, 0, 0.025, M.main, 32);
+    cyl(g, 0.012, 0.012, 0.025, h - 0.19, M.main, 8);
+    const globe = (x, y, rr) => { const m = new THREE.Mesh(new THREE.SphereGeometry(rr, 20, 14), M.shade); m.position.set(x, y, 0); g.add(m); };
+    globe(0, h - 0.105, 0.105);
+    beam(g, [0, h * 0.62, 0], [0.16, h * 0.62 + 0.06, 0], 0.015, 0.015, M.main);
+    globe(0.2, h * 0.62 + 0.04, 0.065);
+    const light = new THREE.PointLight(0xffe2b8, 1.2, 5, 2);
+    light.position.y = h - 0.1;
+    g.add(light);
+  },
+  frame(g, w, d, h, M, it) {
+    box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main);
+    const art = new THREE.MeshStandardMaterial({ map: artTexture(it?.opt?.art || it?.name || "art"), roughness: 0.9 });
+    g.userData.mats.push(art);
+    box(g, -w / 2 + 0.035, w / 2 - 0.035, 0.035, h - 0.035, d / 2, d / 2 + 0.002, art);
+  },
+  cushion(g, w, d, h, M) {
+    box(g, -w / 2 + 0.02, w / 2 - 0.02, 0, h, -d / 2, d / 2, M.main);
+    box(g, -w / 2, w / 2, 0.02, h - 0.02, -d / 2 + 0.02, d / 2 - 0.02, M.main);
+  },
   mirror(g, w, d, h, M) {
     box(g, -w / 2, w / 2, 0, h, -d / 2, d / 2, M.main);
     box(g, -w / 2 + 0.03, w / 2 - 0.03, 0.03, h - 0.03, d / 2, d / 2 + 0.003, M.mirror);
@@ -994,7 +1066,7 @@ function settle(it) {
   const r = rectOf(it);
   let top = 0;
   for (const o of state.items) {
-    if (o === it || o.type === "rug" || o.opt?.sits) continue;
+    if (o === it || o.type === "rug" || o.opt?.sits || o.opt?.decor) continue;
     const t = ((o.elev || 0) + o.h) / 100;
     if (t < 2 && t > top && overlap(r, rectOf(o))) top = t;
   }
@@ -1039,11 +1111,11 @@ function overlap(a, b) {
   }
   return true;
 }
-const SEATS = new Set(["chair", "deskchair"]), TABLES = new Set(["table", "desk"]);
+const SEATS = new Set(["chair", "deskchair"]), TABLES = new Set(["table", "desk", "roundtable"]);
 const tucks = (a, b) => SEATS.has(a.type) && TABLES.has(b.type); // chairs may slide under tables
 
 function collides(it) {
-  if (it.type === "rug") return null;
+  if (it.type === "rug" || it.opt?.decor) return null;
   const r = rectOf(it), e = (it.elev || 0) / 100, h = e + it.h / 100; // h = top of the item
   const ceil = META?.ceiling || 2.26;
   if (h > ceil + 0.004) return e ? "Reaches above the 2.26 m ceiling" : "Taller than the 2.26 m ceiling";
@@ -1056,7 +1128,7 @@ function collides(it) {
     if (o.y0 < h - 0.01 && o.y1 > e + 0.01 && overlap(r, aabbRect(o))) return "Hits a wall or fixture";
   }
   for (const other of state.items) {
-    if (other === it || other.type === "rug" || tucks(it, other) || tucks(other, it)) continue;
+    if (other === it || other.type === "rug" || other.opt?.decor || tucks(it, other) || tucks(other, it)) continue;
     const oe = (other.elev || 0) / 100;
     if (oe + other.h / 100 <= e + 0.005 || oe >= h - 0.005) continue; // one sits on top of the other
     if (overlap(r, rectOf(other))) return "Overlaps " + (other.name || "another item");
@@ -1075,14 +1147,14 @@ function refreshHighlights() {
       m.emissive?.copy(col).multiplyScalar(bad ? 0.35 : sel ? 0.22 : 0);
       if (m.userData.glow) m.emissive.add(m.userData.glow);
     }
-    g.userData.outline.visible = sel || bad;
+    g.userData.outline.visible = !!(sel || bad);
     g.userData.outline.material.color.copy(col);
   }
   updateGaps();
   const it = itemById(state.selected);
   if (it) {
     const pill = $("iFit");
-    pill.textContent = it.type === "rug" ? "Rug: sits under furniture" : it._bad || "Fits";
+    pill.textContent = it.type === "rug" ? "Rug: sits under furniture" : it.opt?.decor ? "Decoration" : it._bad || "Fits";
     pill.className = "pill " + (it._bad ? "bad" : "ok");
   }
 }
@@ -1113,7 +1185,7 @@ function updateGaps() {
   const h = Math.max(it.h / 100, 0.9);
   const boxes = OBST.filter((o) => o.y0 < Math.min(h, 1.2) && o.y1 > 0.01).map((o) => [o.x0, o.x1, o.z0, o.z1]);
   for (const other of state.items) {
-    if (other === it || other.type === "rug" || it.type === "rug") continue;
+    if (other === it || other.type === "rug" || it.type === "rug" || other.opt?.decor || it.opt?.decor) continue;
     const oc = corners(rectOf(other));
     boxes.push([Math.min(...oc.map((c) => c[0])), Math.max(...oc.map((c) => c[0])), Math.min(...oc.map((c) => c[1])), Math.max(...oc.map((c) => c[1]))]);
   }
@@ -1279,7 +1351,7 @@ function addItem(tpl) {
   const t = mode === "walk"
     ? { x: walk.pos.x - Math.sin(walk.yaw) * 1.3, z: walk.pos.z - Math.cos(walk.yaw) * 1.3 }
     : controls().target;
-  const it = { id: newId(), type: tpl.type, name: tpl.name, w: tpl.w, d: tpl.d, h: tpl.h, ...(tpl.opt ? { opt: { ...tpl.opt } } : {}), ...(tpl.color ? { color: tpl.color } : {}), x: clamp(t.x, B[0] + 0.5, B[1] - 0.5), z: clamp(t.z, -B[3] + 0.5, -B[2] - 0.5), rot: 0 };
+  const it = { id: newId(), type: tpl.type, name: tpl.name, w: tpl.w, d: tpl.d, h: tpl.h, ...(tpl.opt ? { opt: { ...tpl.opt } } : {}), ...(tpl.color ? { color: tpl.color } : {}), ...(tpl.elev ? { elev: tpl.elev } : {}), x: clamp(t.x, B[0] + 0.5, B[1] - 0.5), z: clamp(t.z, -B[3] + 0.5, -B[2] - 0.5), rot: 0 };
   // land somewhere free: the view centre if it's open, else the middle of a room
   if (mode !== "walk") {
     for (const [x, z] of [[it.x, it.z], [1.6, -7.0], [4.1, -1.6], [1.5, -8.6], [1.3, -3.4], [4.3, -8.6]]) {
@@ -1570,7 +1642,7 @@ function blocked(x, z) {
     if ((x - nx) ** 2 + (z - nz) ** 2 < RADIUS * RADIUS) return true;
   }
   for (const it of state.items) {
-    if (it.type === "rug" || it.h < 15 || (it.elev || 0) > 100) continue;
+    if (it.type === "rug" || it.opt?.decor || it.h < 15 || (it.elev || 0) > 100) continue;
     const c = Math.cos(it.rot * DEG), s = Math.sin(it.rot * DEG);
     const dx = x - it.x, dz = z - it.z;
     const lx = dx * c - dz * s, lz = dx * s + dz * c;
